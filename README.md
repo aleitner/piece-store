@@ -15,3 +15,7 @@ Each shard is saved in a directory structure, the shard hash is split into chunk
 
 - Maximum total directories is 16 ^ 4 = 65,536
 - With 100,000 files in each it would be 6,553,600,000 files total
+
+### Cons
+- Can't quickly get statistics on data stored. (Data sizes, Disk Usage)
+- Limited by file system
