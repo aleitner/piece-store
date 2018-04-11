@@ -1,7 +1,17 @@
 package main // import "github.com/aleitner/piece-store"
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/urfave/cli"
+	"log"
+	"os"
+)
 
 func main() {
-    fmt.Println("Hello")
+	err := cli.NewApp().Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Hello")
 }
