@@ -2,26 +2,34 @@ package piecestore // import "github.com/aleitner/piece-store/pkg"
 
 import (
 	"fmt"
+  "bufio"
+  "io"
 )
 
-func main() {
-	fmt.Println("API")
-}
-
-func Touchbutts() {
-  fmt.Println("touched")
-}
-
-func Store() {
+func Store(hash string, r *bufio.Reader) (int, error) {
   fmt.Println("Storing...")
 
-}
-func Retrieve() {
-  fmt.Println("Retrieving...")
+  p := make([]byte, 4)
+	for {
+		n, err := r.Read(p)
+		if err == io.EOF {
+			break
+		}
+		fmt.Println(string(p[:n]))
+	}
+  return 0, nil
 }
 
-func Delete() {
+func Retrieve(hash string, w interface{}) (int, error) {
+  fmt.Println("Retrieving...")
+
+  return 0, nil
+}
+
+func Delete(hash string) (int, error) {
   fmt.Println("Deleting...")
+
+  return 0, nil
 }
 
 func GetStoreInfo() {
