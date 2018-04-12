@@ -38,6 +38,7 @@ func main() {
 				}
 
 				// NB: Use stdin if no file specified
+				// files that don't exist cause infinite loop
 				if c.Args().Get(1) == "" {
 					return &argError{"No input file specified"}
 				}
