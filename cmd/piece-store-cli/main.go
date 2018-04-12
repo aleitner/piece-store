@@ -70,8 +70,13 @@ func main() {
 				if c.Args().Get(0) == "" {
 					return &argError{"Missing data Hash"}
 				}
+				if c.Args().Get(1) == "" {
+					return &argError{"Missing file path"}
+				}
+				w := bufio.NewWriter(os.Stdout)
+				defer w.Flush()
 
-				err := piecestore.Retrieve(c.Args().Get(0), nil, "")
+				err := piecestore.Retrieve(c.Args().Get(0), w, c.Args().Get(1))
 
         return err
       },
