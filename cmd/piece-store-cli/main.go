@@ -57,7 +57,7 @@ func main() {
 
 				reader := bufio.NewReader(file)
 
-				_, err = piecestore.Store(c.Args().Get(0), reader, c.Args().Get(2))
+			  err = piecestore.Store(c.Args().Get(0), reader, c.Args().Get(2))
 
         return err
       },
@@ -71,11 +71,27 @@ func main() {
 					return &argError{"Missing data Hash"}
 				}
 
-				_, err := piecestore.Retrieve(c.Args().Get(0), nil, "")
+				err := piecestore.Retrieve(c.Args().Get(0), nil, "")
 
         return err
       },
     },
+		{
+			Name:    "delete",
+			Aliases: []string{"d"},
+			Usage:   "Delete data by hash",
+			Action:  func(c *cli.Context) error {
+				if c.Args().Get(0) == "" {
+					return &argError{"Missing data Hash"}
+				}
+				if c.Args().Get(1) == "" {
+					return &argError{"No directory specified"}
+				}
+				err := piecestore.Delete(c.Args().Get(0), c.Args().Get(1))
+
+				return err
+			},
+		},
   }
 
   sort.Sort(cli.FlagsByName(app.Flags))

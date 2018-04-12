@@ -26,13 +26,13 @@ func (e *fsError) Error() string {
   return fmt.Sprintf("FSError (%s): %s", e.path, e.msg)
 }
 
-func Store(hash string, r *bufio.Reader, dir string) (int, error) {
+func Store(hash string, r *bufio.Reader, dir string) (error) {
   fmt.Println("Storing...")
   if len(hash) < 20 {
-    return 1, &hashError{hash, "Hash is too short"}
+    return &hashError{hash, "Hash is too short"}
   }
 	if dir == "" {
-    return 1, &hashError{dir, "No path provided"}
+    return &hashError{dir, "No path provided"}
   }
 
 	// Folder structure
@@ -46,7 +46,7 @@ func Store(hash string, r *bufio.Reader, dir string) (int, error) {
 	// Create directory path on file system
 	mkDirerr := os.MkdirAll(dirpath, 0700)
 	if mkDirerr != nil {
-		return 1, mkDirerr
+		return mkDirerr
 	}
 
 	// Create File Path string
@@ -55,7 +55,7 @@ func Store(hash string, r *bufio.Reader, dir string) (int, error) {
 	// Create File on file system
 	file, openErr := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE, 0755)
 	if openErr != nil {
-		return 1, openErr
+		return openErr
 	}
 
 	// Close when finished
@@ -74,19 +74,28 @@ func Store(hash string, r *bufio.Reader, dir string) (int, error) {
 		_, err = file.Write(buffer[:n])
 	}
 
-  return 0, nil
+  return nil
 }
 
-func Retrieve(hash string, w interface{}, dir string) (int, error) {
+func Retrieve(hash string, w interface{}, dir string) (error) {
   fmt.Println("Retrieving...")
 
-  return 0, nil
+  return nil
 }
 
-func Delete(hash string, dir string) (int, error) {
+func Delete(hash string, dir string) (error) {
   fmt.Println("Deleting...")
 
-  return 0, nil
+	folder1 := string(hash[0:2])
+  folder2 := string(hash[2:4])
+  fileName := string(hash[4:])
+
+	err := os.Remove(path.Join(dir, folder1, folder2, fileName))
+	if err != nil {
+		return err
+	}
+
+  return nil
 }
 
 func GetStoreInfo(dir string) {
