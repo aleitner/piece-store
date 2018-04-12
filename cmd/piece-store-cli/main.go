@@ -43,6 +43,10 @@ func main() {
 					return &argError{"No input file specified"}
 				}
 
+				if c.Args().Get(2) == "" {
+					return &argError{"No output directory specified"}
+				}
+
 				file, err := os.Open(c.Args().Get(1))
 				if err != nil {
 					return err
@@ -53,7 +57,7 @@ func main() {
 
 				reader := bufio.NewReader(file)
 
-				_, err = piecestore.Store(c.Args().Get(0), reader)
+				_, err = piecestore.Store(c.Args().Get(0), reader, c.Args().Get(2))
 
         return err
       },
@@ -67,7 +71,7 @@ func main() {
 					return &argError{"Missing data Hash"}
 				}
 
-				_, err := piecestore.Retrieve(c.Args().Get(0), nil)
+				_, err := piecestore.Retrieve(c.Args().Get(0), nil, "")
 
         return err
       },
