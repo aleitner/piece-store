@@ -77,8 +77,33 @@ func Store(hash string, r *bufio.Reader, dir string) (error) {
   return nil
 }
 
-func Retrieve(hash string, w interface{}, dir string) (error) {
+func Retrieve(hash string, w *bufio.Writer, dir string) (error) {
   fmt.Println("Retrieving...")
+
+	folder1 := string(hash[0:2])
+  folder2 := string(hash[2:4])
+  fileName := string(hash[4:])
+
+	filePath := path.Join(dir, folder1, folder2, fileName)
+
+	file, openErr := os.OpenFile(filePath, os.O_RDONLY, 0755)
+	if openErr != nil {
+		return openErr
+	}
+	// Close when finished
+	defer file.Close()
+
+	buffer := make([]byte, 4096)
+	for {
+		// Read data from read stream into buffer
+		n, err := file.Read(buffer)
+		if err == io.EOF {
+			break
+		}
+
+		// Write to buffer to the file we opened earlier
+		_, err = w.Write(buffer[:n])
+	}
 
   return nil
 }
