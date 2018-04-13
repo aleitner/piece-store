@@ -8,13 +8,13 @@ import (
 	"path"
 )
 
-type hashError struct {
-  hash string
-  msg string
+type argError struct {
+	arg string
+	msg string
 }
 
-func (e *hashError) Error() string {
-  return fmt.Sprintf("HashError (%s): %s", e.hash, e.msg)
+func (e *argError) Error() string {
+  return fmt.Sprintf("HashError (%s): %s", string(e.arg), e.msg)
 }
 
 type fsError struct {
@@ -29,10 +29,10 @@ func (e *fsError) Error() string {
 func Store(hash string, r *bufio.Reader, dir string) (error) {
   fmt.Println("Storing...")
   if len(hash) < 20 {
-    return &hashError{hash, "Hash is too short"}
+    return &argError{hash, "Hash is too short"}
   }
 	if dir == "" {
-    return &hashError{dir, "No path provided"}
+    return &argError{dir, "No path provided"}
   }
 
 	// Folder structure
@@ -79,6 +79,12 @@ func Store(hash string, r *bufio.Reader, dir string) (error) {
 
 func Retrieve(hash string, w *bufio.Writer, dir string) (error) {
   fmt.Println("Retrieving...")
+	if len(hash) < 20 {
+		return &argError{hash, "Hash too short"}
+	}
+	if dir == "" {
+    return &argError{dir, "No path provided"}
+  }
 
 	folder1 := string(hash[0:2])
   folder2 := string(hash[2:4])
@@ -110,6 +116,12 @@ func Retrieve(hash string, w *bufio.Writer, dir string) (error) {
 
 func Delete(hash string, dir string) (error) {
   fmt.Println("Deleting...")
+	if len(hash) < 20 {
+		return &argError{hash, "Hash too short"}
+	}
+	if dir == "" {
+    return &argError{dir, "No path provided"}
+  }
 
 	folder1 := string(hash[0:2])
   folder2 := string(hash[2:4])
