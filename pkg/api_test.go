@@ -1,9 +1,35 @@
 package piecestore // import "github.com/aleitner/piece-store/pkg"
 
 import "testing"
+import "os"
+import "path"
 
-func TestGetStoreInfo(t *testing.T) {
-    GetStoreInfo("/tmp/")
+var testFile = path.Join(os.TempDir(), "test.txt")
+
+func createTestFile() (error) {
+  file, createFileErr := os.Create(testFile)
+
+  if createFileErr != nil {
+    return createFileErr
+  }
+
+  b := []byte{'b', 'u', 't', 't', 's'}
+  _, writeToFileErr := file.Write(b)
+
+  if writeToFileErr != nil {
+    return writeToFileErr
+  }
+
+  return nil
+}
+
+func deleteTestFile() (error) {
+  err := os.Remove(testFile)
+  if err != nil {
+    return err
+  }
+
+  return nil
 }
 
 func TestStore(t *testing.T) {
@@ -24,4 +50,8 @@ func TestDelete(t *testing.T) {
   // Verify files exist
   // Run Delete()
   // Verify that the files are no longer existing
+}
+
+func TestGetStoreInfo(t *testing.T) {
+    GetStoreInfo("/tmp/")
 }
