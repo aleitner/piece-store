@@ -5,6 +5,7 @@ import (
     "os"
     "path"
     "bufio"
+    "fmt"
 )
 
 
@@ -45,20 +46,19 @@ func TestStore(t *testing.T) {
     return
   }
 
-  // Close the file when we are done
   defer file.Close()
 
   reader := bufio.NewReader(file)
 
   hash := "0123456789ABCDEFGHIJ"
   Store(hash, reader, os.TempDir())
-  // Run Store()
+
   folder1 := string(hash[0:2])
   folder2 := string(hash[2:4])
   fileName := string(hash[4:])
 
-	// Create directory path string
   createdFilePath := path.Join(os.TempDir(), folder1, folder2, fileName)
+  defer os.RemoveAll(path.Join(os.TempDir(), folder1))
   _, lStatErr := os.Lstat(createdFilePath)
   if lStatErr != nil {
     t.Errorf("No file was created from Store(): %s", lStatErr.Error())
@@ -78,13 +78,52 @@ func TestStore(t *testing.T) {
   if string(buffer) != "butts" {
     t.Errorf("Expected data butts does not equal Actual data %s", string(buffer))
   }
-  // Check if folder structure and file were created
-  // delete the folders and file
 }
 
 func TestRetrieve(t *testing.T) {
-  // Run Store()
-  // Run Retrieve()
+  createTestFile()
+  defer deleteTestFile()
+  file, openTestFileErr := os.Open(testFile)
+  if openTestFileErr != nil {
+    t.Errorf("Could not open test file")
+    return
+  }
+
+  defer file.Close()
+
+  reader := bufio.NewReader(file)
+
+  hash := "0123456789ABCDEFGHIJ"
+  Store(hash, reader, os.TempDir())
+
+  retrievalFilePath := path.Join(os.TempDir(), "retrieved.txt")
+  retrievalFile, retrievalFileError := os.OpenFile(retrievalFilePath, os.O_RDWR|os.O_CREATE, 0755)
+  defer retrievalFile.Close()
+
+  if retrievalFileError != nil {
+    t.Errorf("Error creating file: %s", retrievalFileError.Error())
+  }
+  writer := bufio.NewWriter(retrievalFile)
+
+  retrieveErr := Retrieve(hash, writer, os.TempDir())
+  if retrieveErr != nil {
+    t.Errorf("Retrieve Error: %s", retrieveErr.Error())
+  }
+/********************************************/
+  _, lStatErr := os.Lstat(retrievalFilePath)
+  if lStatErr != nil {
+    t.Errorf("No file was created from retrieve(): %s", lStatErr.Error())
+    return
+  }
+
+  buffer := make([]byte, 5)
+  _, _ = retrievalFile.Read(buffer)
+
+  fmt.Printf("Retrieved data: %s", string(buffer))
+
+  if string(buffer) != "butts" {
+    t.Errorf("Expected data butts does not equal Actual data %s", string(buffer))
+  }
   // Verify that the contents of the retrieve match what was stored
   // delete the folders and file
 }
