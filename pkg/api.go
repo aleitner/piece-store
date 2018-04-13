@@ -70,7 +70,7 @@ func Store(hash string, r *bufio.Reader, dir string) (error) {
 			break
 		}
 
-		// Write to buffer to the file we opened earlier
+		// Write the buffer to the file we opened earlier
 		_, err = file.Write(buffer[:n])
 	}
 
@@ -107,8 +107,15 @@ func Retrieve(hash string, w *bufio.Writer, dir string) (error) {
 			break
 		}
 
+		fmt.Println("read buffer: ", string(buffer))
+		fmt.Println("read bytes: ", n)
 		// Write to buffer to the file we opened earlier
-		_, err = w.Write(buffer[:n])
+		writtenbytes, writeError := w.Write(buffer[:n])
+		fmt.Println("written bytes: ",writtenbytes)
+		if writeError != nil {
+			fmt.Println("Write Error:", writeError)
+		}
+
 	}
 
   return nil

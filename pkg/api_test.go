@@ -96,26 +96,23 @@ func TestRetrieve(t *testing.T) {
   hash := "0123456789ABCDEFGHIJ"
   Store(hash, reader, os.TempDir())
 
+  // Create file for retrieving data into
   retrievalFilePath := path.Join(os.TempDir(), "retrieved.txt")
-  retrievalFile, retrievalFileError := os.OpenFile(retrievalFilePath, os.O_RDWR|os.O_CREATE, 0755)
-  defer retrievalFile.Close()
-
+  retrievalFile, retrievalFileError := os.OpenFile(retrievalFilePath, os.O_RDWR|os.O_CREATE, 0777)
   if retrievalFileError != nil {
     t.Errorf("Error creating file: %s", retrievalFileError.Error())
   }
+  defer retrievalFile.Close()
+
+  retrievalFile.Seek(0,0)
   writer := bufio.NewWriter(retrievalFile)
 
   retrieveErr := Retrieve(hash, writer, os.TempDir())
+
   if retrieveErr != nil {
     t.Errorf("Retrieve Error: %s", retrieveErr.Error())
   }
 /********************************************/
-  _, lStatErr := os.Lstat(retrievalFilePath)
-  if lStatErr != nil {
-    t.Errorf("No file was created from retrieve(): %s", lStatErr.Error())
-    return
-  }
-
   buffer := make([]byte, 5)
   _, _ = retrievalFile.Read(buffer)
 
