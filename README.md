@@ -1,7 +1,13 @@
 ## Build
 
 ```BASH
+vgo build -o piece-store-cli cmd/piece-store-cli/main.go
+```
 
+## Run Tests
+
+```BASH
+vgo test pkg/*
 ```
 
 ### Storage
