@@ -118,6 +118,8 @@ func Retrieve(hash string, w *bufio.Writer, dir string) (error) {
 
 	}
 
+	w.Flush()
+
   return nil
 }
 

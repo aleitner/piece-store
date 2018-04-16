@@ -107,7 +107,6 @@ func TestRetrieve(t *testing.T) {
 
   retrievalFile.Seek(0,0)
   writer := bufio.NewWriter(retrievalFile)
-  defer writer.Flush()
 
   retrieveErr := Retrieve(hash, writer, os.TempDir())
 
