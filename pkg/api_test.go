@@ -8,7 +8,6 @@ import (
     "fmt"
 )
 
-
 var testFile = path.Join(os.TempDir(), "test.txt")
 
 func createTestFile() (error) {
@@ -112,7 +111,7 @@ func TestRetrieve(t *testing.T) {
   if retrieveErr != nil {
     t.Errorf("Retrieve Error: %s", retrieveErr.Error())
   }
-/********************************************/
+
   buffer := make([]byte, 5)
 
   retrievalFile.Seek(0,0)
@@ -123,17 +122,38 @@ func TestRetrieve(t *testing.T) {
   if string(buffer) != "butts" {
     t.Errorf("Expected data butts does not equal Actual data %s", string(buffer))
   }
-  // Verify that the contents of the retrieve match what was stored
-  // delete the folders and file
 }
 
 func TestDelete(t *testing.T) {
-  // Run Store()
-  // Verify files exist
-  // Run Delete()
-  // Verify that the files are no longer existing
-}
+  createTestFile()
+  defer deleteTestFile()
+  file, openTestFileErr := os.Open(testFile)
+  if openTestFileErr != nil {
+    t.Errorf("Could not open test file")
+    return
+  }
 
-func TestGetStoreInfo(t *testing.T) {
-    GetStoreInfo("/tmp/")
+  defer file.Close()
+
+  reader := bufio.NewReader(file)
+
+  hash := "0123456789ABCDEFGHIJ"
+  Store(hash, reader, os.TempDir())
+
+  folder1 := string(hash[0:2])
+  folder2 := string(hash[2:4])
+  fileName := string(hash[4:])
+
+  _, existErr := os.Stat(path.Join(os.TempDir(), folder1, folder2, fileName))
+  if existErr != nil {
+    t.Errorf("Failed to Store test file")
+    return
+  }
+
+  Delete(hash, os.TempDir())
+  _, deletedExistErr := os.Stat(path.Join(os.TempDir(), folder1, folder2, fileName))
+  if deletedExistErr == nil {
+    t.Errorf("Failed to Delete test file")
+    return
+  }
 }

@@ -144,7 +144,3 @@ func Delete(hash string, dir string) (error) {
 
   return nil
 }
-
-func GetStoreInfo(dir string) {
-  fmt.Println("Getting store info")
-}

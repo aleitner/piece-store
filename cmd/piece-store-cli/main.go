@@ -32,6 +32,7 @@ func main() {
       Name:    "store",
       Aliases: []string{"s"},
       Usage:   "Store data by hash",
+			ArgsUsage: "[hash] [dataPath] [storeDir]",
       Action:  func(c *cli.Context) error {
 				if c.Args().Get(0) == "" {
 					return &argError{"Missing data Hash"}
@@ -51,7 +52,15 @@ func main() {
 				if err != nil {
 					return err
 				}
+				fileInfo, existErr := os.Stat(c.Args().Get(1));
 
+				if os.IsNotExist(existErr) {
+					return existErr
+				}
+
+				if fileInfo.IsDir() {
+					return &argError{fmt.Sprintf("Path (%s) is a directory, not a file", c.Args().Get(1))}
+				}
 				// Close the file when we are done
 				defer file.Close()
 
@@ -65,13 +74,23 @@ func main() {
     {
       Name:    "retrieve",
       Aliases: []string{"r"},
-      Usage:   "Retrieve data by hash",
+      Usage:   "Retrieve data by hash and print to Stdout",
+			ArgsUsage: "[hash] [storeDir]",
       Action:  func(c *cli.Context) error {
 				if c.Args().Get(0) == "" {
 					return &argError{"Missing data Hash"}
 				}
 				if c.Args().Get(1) == "" {
 					return &argError{"Missing file path"}
+				}
+				fileInfo, existErr := os.Stat(c.Args().Get(1));
+
+				if os.IsNotExist(existErr) {
+					return existErr
+				}
+
+				if fileInfo.IsDir() {
+					return &argError{fmt.Sprintf("Path (%s) is a directory, not a file", c.Args().Get(1))}
 				}
 				w := bufio.NewWriter(os.Stdout)
 
@@ -84,6 +103,7 @@ func main() {
 			Name:    "delete",
 			Aliases: []string{"d"},
 			Usage:   "Delete data by hash",
+			ArgsUsage: "[hash] [storeDir]",
 			Action:  func(c *cli.Context) error {
 				if c.Args().Get(0) == "" {
 					return &argError{"Missing data Hash"}
