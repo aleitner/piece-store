@@ -101,6 +101,7 @@ func TestRetrieve(t *testing.T) {
   retrievalFile, retrievalFileError := os.OpenFile(retrievalFilePath, os.O_RDWR|os.O_CREATE, 0777)
   if retrievalFileError != nil {
     t.Errorf("Error creating file: %s", retrievalFileError.Error())
+    return
   }
   defer retrievalFile.Close()
 
