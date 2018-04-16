@@ -105,7 +105,6 @@ func TestRetrieve(t *testing.T) {
   }
   defer retrievalFile.Close()
 
-  retrievalFile.Seek(0,0)
   writer := bufio.NewWriter(retrievalFile)
 
   retrieveErr := Retrieve(hash, writer, os.TempDir())
@@ -115,6 +114,8 @@ func TestRetrieve(t *testing.T) {
   }
 /********************************************/
   buffer := make([]byte, 5)
+
+  retrievalFile.Seek(0,0)
   _, _ = retrievalFile.Read(buffer)
 
   fmt.Printf("Retrieved data: %s", string(buffer))

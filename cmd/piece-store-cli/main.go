@@ -74,7 +74,6 @@ func main() {
 					return &argError{"Missing file path"}
 				}
 				w := bufio.NewWriter(os.Stdout)
-				defer w.Flush()
 
 				err := piecestore.Retrieve(c.Args().Get(0), w, c.Args().Get(1))
 

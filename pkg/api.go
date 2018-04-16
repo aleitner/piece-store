@@ -99,6 +99,7 @@ func Retrieve(hash string, w *bufio.Writer, dir string) (error) {
 	// Close when finished
 	defer file.Close()
 
+	file.Seek(0,0)
 	buffer := make([]byte, 4096)
 	for {
 		// Read data from read stream into buffer
