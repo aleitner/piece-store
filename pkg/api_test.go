@@ -6,47 +6,24 @@ package pstore // import "storj.io/storj/pkg/pstore"
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"testing"
 )
 
-func createTestFile() (os.File, error) {
-	content := []byte("butts")
-	tmpfile, err := ioutil.TempFile("", "api_test")
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := tmpfile.Write(content); err != nil {
-		return nil, err
-	}
-
-	return tmpfile, nil
-}
-
-func deleteTestFile(tmpfile *os.File) error {
-	if err := tmpfile.Close(); err != nil {
-		return nil, err
-	}
-
-	err := os.Remove(tmpfile.Name())
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
+var tmpfile string
 
 func TestStore(t *testing.T) {
-	tmpFile, err := createTestFile()
+	file, err := os.Open(tmpfile)
 	if err != nil {
-		t.Errorf("Failed to generate test data: %s", err.Error())
+		t.Errorf("Error opening tmp file: %s", err.Error())
 		return
 	}
-	defer deleteTestFile(tmpFile)
 
-	reader := bufio.NewReader(tmpFile)
+	reader := bufio.NewReader(file)
+	defer file.Close()
 
 	hash := "0123456789ABCDEFGHIJ"
 	Store(hash, reader, os.TempDir())
@@ -70,6 +47,7 @@ func TestStore(t *testing.T) {
 	defer createdFile.Close()
 
 	buffer := make([]byte, 5)
+	createdFile.Seek(0, 0)
 	_, _ = createdFile.Read(buffer)
 
 	if string(buffer) != "butts" {
@@ -78,14 +56,14 @@ func TestStore(t *testing.T) {
 }
 
 func TestRetrieve(t *testing.T) {
-	tmpFile, err := createTestFile()
+	file, err := os.Open(tmpfile)
 	if err != nil {
-		t.Errorf("Failed to generate test data: %s", err.Error())
+		t.Errorf("Error opening tmp file: %s", err.Error())
 		return
 	}
-	defer deleteTestFile(tmpFile)
 
-	reader := bufio.NewReader(tmpFile)
+	reader := bufio.NewReader(file)
+	defer file.Close()
 
 	hash := "0123456789ABCDEFGHIJ"
 	Store(hash, reader, os.TempDir())
@@ -120,14 +98,14 @@ func TestRetrieve(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	tmpFile, err := createTestFile()
+	file, err := os.Open(tmpfile)
 	if err != nil {
-		t.Errorf("Failed to generate test data: %s", err.Error())
+		t.Errorf("Error opening tmp file: %s", err.Error())
 		return
 	}
-	defer deleteTestFile(tmpFile)
 
-	reader := bufio.NewReader(tmpFile)
+	reader := bufio.NewReader(file)
+	defer file.Close()
 
 	hash := "0123456789ABCDEFGHIJ"
 	Store(hash, reader, os.TempDir())
@@ -148,4 +126,27 @@ func TestDelete(t *testing.T) {
 		t.Errorf("Failed to Delete test file")
 		return
 	}
+}
+
+func TestMain(m *testing.M) {
+	content := []byte("butts")
+	tmpfilePtr, err := ioutil.TempFile("", "api_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// defer os.Remove(tmpfile.Name()) // clean up
+	tmpfile = tmpfilePtr.Name()
+
+	if _, err := tmpfilePtr.Write(content); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := tmpfilePtr.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	m.Run()
+
+	os.Exit(0)
 }
