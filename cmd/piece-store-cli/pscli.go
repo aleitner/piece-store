@@ -4,7 +4,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/aleitner/piece-store/pkg"
 	"github.com/urfave/cli"
@@ -51,13 +50,13 @@ func main() {
 				// Close the file when we are done
 				defer file.Close()
 
-				fileInfo, existErr := os.Stat(c.Args().Get(1))
+				fileInfo, err := os.Stat(c.Args().Get(1))
 
 				if fileInfo.IsDir() {
 					return ArgError.New(fmt.Sprintf("Path (%s) is a directory, not a file", c.Args().Get(1)))
 				}
 
-				err = piecestore.Store(c.Args().Get(0), file, int64(fileInfo.Size()), 0, c.Args().Get(2))
+				err = pstore.Store(c.Args().Get(0), file, int64(fileInfo.Size()), 0, c.Args().Get(2))
 
 				return err
 			},
@@ -69,23 +68,22 @@ func main() {
 			ArgsUsage: "[hash] [storeDir]",
 			Action: func(c *cli.Context) error {
 				if c.Args().Get(0) == "" {
-					return &argError{"Missing data Hash"}
+					return ArgError.New("Missing data Hash")
 				}
 				if c.Args().Get(1) == "" {
-					return &argError{"Missing file path"}
+					return ArgError.New("Missing file path")
 				}
-				fileInfo, existErr := os.Stat(c.Args().Get(1))
+				fileInfo, err := os.Stat(c.Args().Get(1))
 
-				if os.IsNotExist(existErr) {
-					return existErr
+				if os.IsNotExist(err) {
+					return err
 				}
 
-				if fileInfo.IsDir() {
-					return ArgError.New(fmt.Sprintf("Path (%s) is a directory, not a file", c.Args().Get(1)))
+				if fileInfo.IsDir() != true {
+					return ArgError.New(fmt.Sprintf("Path (%s) is a file, not a directory", c.Args().Get(1)))
 				}
-				w := bufio.NewWriter(os.Stdout)
 
-				err := piecestore.Retrieve(c.Args().Get(0), w, c.Args().Get(1))
+				err = pstore.Retrieve(c.Args().Get(0), os.Stdout, 5, 0, c.Args().Get(1))
 
 				return err
 			},
@@ -102,7 +100,7 @@ func main() {
 				if c.Args().Get(1) == "" {
 					return ArgError.New("No directory specified")
 				}
-				err := piecestore.Delete(c.Args().Get(0), c.Args().Get(1))
+				err := pstore.Delete(c.Args().Get(0), c.Args().Get(1))
 
 				return err
 			},

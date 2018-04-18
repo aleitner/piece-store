@@ -4,7 +4,6 @@
 package pstore // import "storj.io/storj/pkg/pstore"
 
 import (
-	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -80,19 +79,17 @@ func TestRetrieve(t *testing.T) {
 
 	// Create file for retrieving data into
 	retrievalFilePath := path.Join(os.TempDir(), "retrieved.txt")
-	retrievalFile, retrievalFileError := os.OpenFile(retrievalFilePath, os.O_RDWR|os.O_CREATE, 0777)
-	if retrievalFileError != nil {
-		t.Errorf("Error creating file: %s", retrievalFileError.Error())
+	retrievalFile, err := os.OpenFile(retrievalFilePath, os.O_RDWR|os.O_CREATE, 0777)
+	if err != nil {
+		t.Errorf("Error creating file: %s", err.Error())
 		return
 	}
 	defer retrievalFile.Close()
 
-	writer := bufio.NewWriter(retrievalFile)
+	err = Retrieve(hash, retrievalFile, int64(fi.Size()), 0, os.TempDir())
 
-	retrieveErr := Retrieve(hash, writer, os.TempDir())
-
-	if retrieveErr != nil {
-		t.Errorf("Retrieve Error: %s", retrieveErr.Error())
+	if err != nil {
+		t.Errorf("Retrieve Error: %s", err.Error())
 	}
 
 	buffer := make([]byte, 5)
@@ -129,15 +126,14 @@ func TestDelete(t *testing.T) {
 	folder2 := string(hash[2:4])
 	fileName := string(hash[4:])
 
-	_, existErr := os.Stat(path.Join(os.TempDir(), folder1, folder2, fileName))
-	if existErr != nil {
+	if _, err := os.Stat(path.Join(os.TempDir(), folder1, folder2, fileName)); err != nil {
 		t.Errorf("Failed to Store test file")
 		return
 	}
 
 	Delete(hash, os.TempDir())
-	_, deletedExistErr := os.Stat(path.Join(os.TempDir(), folder1, folder2, fileName))
-	if deletedExistErr == nil {
+	_, err = os.Stat(path.Join(os.TempDir(), folder1, folder2, fileName))
+	if err == nil {
 		t.Errorf("Failed to Delete test file")
 		return
 	}
