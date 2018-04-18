@@ -110,8 +110,20 @@ func Retrieve(hash string, w io.Writer, length int64, offset int64, dir string) 
 	}
 
 	fileInfo, err := os.Stat(dataPath)
+
+	// If offset is greater than file size return
+	if offset >= fileInfo.Size() || offset < 0 {
+		return ArgError.New("Invalid offset: %v", offset)
+	}
+
+	// If length is 0 read the entire file
 	if length <= 0 {
 		length = fileInfo.Size()
+	}
+
+	// If trying to read past the end of the file, just read to the end
+	if fileInfo.Size() < offset+length {
+		length = fileInfo.Size() - offset
 	}
 
 	dataFile, err := os.OpenFile(dataPath, os.O_RDONLY, 0755)
