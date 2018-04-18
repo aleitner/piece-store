@@ -1,41 +1,43 @@
 // Copyright (C) 2018 Storj Labs, Inc.
 // See LICENSE for copying information.
 
+// store, retrieve, and delete data from Storj farmers
+
 package pstore // import "storj.io/storj/pkg/pstore"
 
 import (
+	"io"
 	"bufio"
 	"fmt"
-	"io"
 	"os"
 	"path"
+	"github.com/zeebo/errs"
 )
 
-type argError struct {
-	arg string
-	msg string
-}
 
-func (e *argError) Error() string {
-	return fmt.Sprintf("HashError (%s): %s", string(e.arg), e.msg)
-}
+// Errors
+var (
+	ArgError = errs.Class("argError")
+	FSError  = errs.Class("fsError")
+)
 
-type fsError struct {
-	path string
-	msg  string
-}
+/*
+	Store
 
-func (e *fsError) Error() string {
-	return fmt.Sprintf("FSError (%s): %s", e.path, e.msg)
-}
+	Store data into piece store
 
-func Store(hash string, r *bufio.Reader, dir string) error {
-	fmt.Println("Storing...")
+	hash 		(string)		Hash of the data to be stored
+	r 			(io.Reader)	File/Stream that containts the contents of the data to be stored
+	length 	(length)		Size of the data to be stored
+	offset 	(offset)		Offset of the data if you are writing. Useful for multiple connections to split the data transfer
+	dir 		(string)		pstore directory containing all other data stored
+*/
+func Store(hash string, r io.Reader, length int64, offset int64, dir string) error {
 	if len(hash) < 20 {
-		return &argError{hash, "Hash is too short"}
+		return ArgError.New("Hash is too short. Must be atleast 20 bytes")
 	}
 	if dir == "" {
-		return &argError{dir, "No path provided"}
+		return ArgError.New("No path provided")
 	}
 
 	// Folder structure
@@ -47,46 +49,37 @@ func Store(hash string, r *bufio.Reader, dir string) error {
 	dirpath := path.Join(dir, folder1, folder2)
 
 	// Create directory path on file system
-	mkDirerr := os.MkdirAll(dirpath, 0700)
-	if mkDirerr != nil {
-		return mkDirerr
+	if err := os.MkdirAll(dirpath, 0700); err != nil {
+		return err
 	}
 
 	// Create File Path string
 	filepath := path.Join(dirpath, fileName)
 
 	// Create File on file system
-	file, openErr := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE, 0755)
-	if openErr != nil {
-		return openErr
+	file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		return err
 	}
 
 	// Close when finished
 	defer file.Close()
 
-	// Buffer for reading data
-	buffer := make([]byte, 4096)
-	for {
-		// Read data from read stream into buffer
-		n, err := r.Read(buffer)
-		if err == io.EOF {
-			break
-		}
+	file.Seek(offset, 0)
 
-		// Write the buffer to the file we opened earlier
-		_, err = file.Write(buffer[:n])
+	if _, err := io.CopyN(file, r, length); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func Retrieve(hash string, w *bufio.Writer, dir string) error {
-	fmt.Println("Retrieving...")
 	if len(hash) < 20 {
-		return &argError{hash, "Hash too short"}
+		return ArgError.New("Hash is too short. Must be atleast 20 bytes")
 	}
 	if dir == "" {
-		return &argError{dir, "No path provided"}
+		return ArgError.New("No path provided")
 	}
 
 	folder1 := string(hash[0:2])
@@ -111,11 +104,8 @@ func Retrieve(hash string, w *bufio.Writer, dir string) error {
 			break
 		}
 
-		fmt.Println("read buffer: ", string(buffer))
-		fmt.Println("read bytes: ", n)
 		// Write to buffer to the file we opened earlier
-		writtenbytes, writeError := w.Write(buffer[:n])
-		fmt.Println("written bytes: ", writtenbytes)
+		_, writeError := w.Write(buffer[:n])
 		if writeError != nil {
 			fmt.Println("Write Error:", writeError)
 		}
@@ -128,12 +118,11 @@ func Retrieve(hash string, w *bufio.Writer, dir string) error {
 }
 
 func Delete(hash string, dir string) error {
-	fmt.Println("Deleting...")
 	if len(hash) < 20 {
-		return &argError{hash, "Hash too short"}
+		return ArgError.New("Hash is too short. Must be atleast 20 bytes")
 	}
 	if dir == "" {
-		return &argError{dir, "No path provided"}
+		return ArgError.New("No path provided")
 	}
 
 	folder1 := string(hash[0:2])

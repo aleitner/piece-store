@@ -22,11 +22,16 @@ func TestStore(t *testing.T) {
 		return
 	}
 
-	reader := bufio.NewReader(file)
+	fi, err := file.Stat()
+	if err != nil {
+		t.Errorf("Could not stat test file: %s", err.Error())
+		return
+	}
+
 	defer file.Close()
 
 	hash := "0123456789ABCDEFGHIJ"
-	Store(hash, reader, os.TempDir())
+	Store(hash, file, int64(fi.Size()), 0, os.TempDir())
 
 	folder1 := string(hash[0:2])
 	folder2 := string(hash[2:4])
@@ -62,11 +67,16 @@ func TestRetrieve(t *testing.T) {
 		return
 	}
 
-	reader := bufio.NewReader(file)
+	fi, err := file.Stat()
+	if err != nil {
+		t.Errorf("Could not stat test file: %s", err.Error())
+		return
+	}
+
 	defer file.Close()
 
 	hash := "0123456789ABCDEFGHIJ"
-	Store(hash, reader, os.TempDir())
+	Store(hash, file, int64(fi.Size()), 0, os.TempDir())
 
 	// Create file for retrieving data into
 	retrievalFilePath := path.Join(os.TempDir(), "retrieved.txt")
@@ -104,11 +114,16 @@ func TestDelete(t *testing.T) {
 		return
 	}
 
-	reader := bufio.NewReader(file)
+	fi, err := file.Stat()
+	if err != nil {
+		t.Errorf("Could not stat test file: %s", err.Error())
+		return
+	}
+
 	defer file.Close()
 
 	hash := "0123456789ABCDEFGHIJ"
-	Store(hash, reader, os.TempDir())
+	Store(hash, file, int64(fi.Size()), 0, os.TempDir())
 
 	folder1 := string(hash[0:2])
 	folder2 := string(hash[2:4])
