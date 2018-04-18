@@ -6,14 +6,13 @@
 package pstore // import "storj.io/storj/pkg/pstore"
 
 import (
-	"io"
 	"bufio"
 	"fmt"
+	"github.com/zeebo/errs"
+	"io"
 	"os"
 	"path"
-	"github.com/zeebo/errs"
 )
-
 
 // Errors
 var (
