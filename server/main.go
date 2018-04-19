@@ -10,7 +10,7 @@ import (
 
 const dataDir = "./piece-store-data"
 
-func ReceiveFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
   // in your case file would be fileupload
   file, header, err := r.FormFile("uploadfile")
@@ -68,6 +68,6 @@ func main() {
   router.GET("/", Index)
   router.GET("/upload", ShowUploadForm)
   router.ServeFiles("/files/*filepath", http.Dir(dataDir))
-  router.POST("/upload", ReceiveFile)
+  router.POST("/upload", UploadFile)
   log.Fatal(http.ListenAndServe(":8080", router))
 }
