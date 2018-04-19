@@ -6,6 +6,8 @@ import (
   "net/http"
   "log"
   "html/template"
+  "strings"
+  "strconv"
 )
 
 const dataDir = "./piece-store-data"
@@ -19,18 +21,44 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
     return
   }
 
+  // We have to do stupid conversions
+  // Is there a better way to convert []string into ints?
+  r.ParseForm()
+  var dataSize int64
+  dataSizeStr := strings.Join(r.Form["size"], "")
+  dataSizeInt64, _ := strconv.ParseInt(dataSizeStr, 10, 64);
+  if dataSizeStr == "" || dataSizeInt64 <= 0 {
+    dataSize = header.Size
+  } else {
+    dataSize = dataSizeInt64
+  }
+
+  var dataOffset int64
+  dataOffsetStr := strings.Join(r.Form["offset"], "")
+  dataOffsetInt64, _ := strconv.ParseInt(dataOffsetStr, 10, 64);
+  if dataOffsetStr == "" && dataOffsetInt64 <= 0 {
+    dataOffset = 0
+  } else {
+    dataOffset = dataOffsetInt64
+  }
+
   defer file.Close()
-  fmt.Printf("Uploading file %s...", header.Filename)
+  fmt.Printf("Uploading file (%s), Offset: (%v), Size: (%v)...\n", header.Filename, dataOffset, dataSize)
 
   hash := String(20)
-  err = pstore.Store(hash, file, header.Size, 0, dataDir)
+  err = pstore.Store(hash, file, dataSize, dataOffset, dataDir)
 
   if err != nil {
     fmt.Printf("Error: ", err.Error())
     return
   }
 
+  fmt.Printf("Successfully uploaded file %s...\n", header.Filename)
+
+
+  w.Header().Set("Content-Type", "text/html; charset=utf-8")
   message := fmt.Sprintf("Successfully uploaded file!\nName: %s\nHash: %s\nSize: %v\n", header.Filename, hash, header.Size)
+  message = fmt.Sprintf("%s\n<a href=\"/files/\">List files</a>", message)
   w.Write([]byte(message))
 }
 
@@ -51,8 +79,6 @@ func ShowUploadForm(w http.ResponseWriter, r *http.Request, _ httprouter.Params)
 func renderByPath(w http.ResponseWriter, path string) error {
   w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-  fp := http.Dir(path)
-  fmt.Println(fp)
   tmpl, err := template.ParseFiles(path)
   if err != nil {
       return err
@@ -63,7 +89,6 @@ func renderByPath(w http.ResponseWriter, path string) error {
 }
 
 func main() {
-  fmt.Println("Starting server...")
   router := httprouter.New()
   router.GET("/", Index)
   router.GET("/upload", ShowUploadForm)
