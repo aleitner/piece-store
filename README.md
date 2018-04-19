@@ -7,7 +7,7 @@ vgo build -o piece-store-cli cmd/piece-store-cli/main.go
 
 Build the Server example App
 ```BASH
-vgo build -o piece-store-server server/main.go
+vgo build -o piece-store-server server/main.go server/utils.go
 ```
 Server is available at `127.0.0.1:8080`
 

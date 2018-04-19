@@ -1,0 +1,2 @@
+server/piece-store-data/*
+!server/piece-store-data/.keep
