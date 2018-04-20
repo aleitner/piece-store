@@ -166,6 +166,63 @@ func TestStore(t *testing.T) {
 			t.Errorf("Expected error (Hash is too short. Must be atleast 20 bytes) does not equal Actual error (%s)", err.Error())
 		}
 	})
+
+	// Test passing in negative offset
+	t.Run("it should return an error when given negative offset", func(t *testing.T) {
+		file, err := os.Open(tmpfile)
+		if err != nil {
+			t.Errorf("Error opening tmp file: %s", err.Error())
+			return
+		}
+
+		fi, err := file.Stat()
+		if err != nil {
+			t.Errorf("Could not stat test file: %s", err.Error())
+			return
+		}
+
+		defer file.Close()
+
+		hash := "0123456789ABCDEFGHIJ"
+
+		err = Store(hash, file, int64(fi.Size()), -1, os.TempDir())
+		if err == nil || err.Error() != "argError: Offset is less than 0. Must be greater than or equal to 0" {
+			t.Errorf("Expected error (Offset is less than 0. Must be greater than or equal to 0) does not equal Actual error (%s)", err.Error())
+		}
+	})
+
+	// Test passing in a negative length
+	t.Run("it should return an error when given negative length", func(t *testing.T) {
+		file, err := os.Open(tmpfile)
+		if err != nil {
+			t.Errorf("Error opening tmp file: %s", err.Error())
+			return
+		}
+
+		_, err = file.Stat()
+		if err != nil {
+			t.Errorf("Could not stat test file: %s", err.Error())
+			return
+		}
+
+		defer file.Close()
+
+		hash := "0123456789ABCDEFGHIJ"
+
+		err = Store(hash, file, -1, 0, os.TempDir())
+		if err == nil || err.Error() != "argError: Length is less than 0. Must be greater than or equal to 0" {
+			t.Errorf("Expected error (Length is less than 0. Must be greater than or equal to 0) does not equal Actual error (%s)", err.Error())
+		}
+	})
+
+	// Test passing in a folder
+	// t.Run("it should return an error when storing a folder", func(t *testing.T) {
+	// 	hash := "0123456789ABCDEFGHIJ"
+	// 	err := Store(hash, os.TempDir(), 0, 0, os.TempDir())
+	// 	if err == nil || err.Error() != "argError: Path is a directory, not a file" {
+	// 		t.Errorf("Expected error (Path is a directory, not a file) does not equal Actual error (%s)", err.Error())
+	// 	}
+	// })
 }
 
 func TestRetrieve(t *testing.T) {
@@ -303,6 +360,19 @@ func TestRetrieve(t *testing.T) {
 			t.Errorf("Expected data (but) does not equal Actual data (%s)", string(buffer))
 		}
 	})
+
+		// Test passing in negative offset
+		t.Run("it should return an error when retrieving with negative offset", func(t *testing.T) {
+
+		})
+
+		// Test passing in negative length
+		t.Run("it should return an error when retrieving with negative length", func(t *testing.T) {
+			
+		})
+
+		// Test passing in a folder
+
 }
 
 func TestDelete(t *testing.T) {
@@ -338,6 +408,42 @@ func TestDelete(t *testing.T) {
 		if err == nil {
 			t.Errorf("Failed to Delete test file")
 			return
+		}
+	})
+
+	// Test passing in a hash that doesn't exist
+	t.Run("it returns an error if hash doesn't exist", func(t *testing.T) {
+		file, err := os.Open(tmpfile)
+		if err != nil {
+			t.Errorf("Error opening tmp file: %s", err.Error())
+			return
+		}
+
+		fi, err := file.Stat()
+		if err != nil {
+			t.Errorf("Could not stat test file: %s", err.Error())
+			return
+		}
+
+		defer file.Close()
+
+		hash := "0123456789ABCDEFGHIJ"
+		Store(hash, file, int64(fi.Size()), 0, os.TempDir())
+
+		folder1 := string(hash[0:2])
+		folder2 := string(hash[2:4])
+		fileName := string(hash[4:])
+
+		if _, err := os.Stat(path.Join(os.TempDir(), folder1, folder2, fileName)); err != nil {
+			t.Errorf("Failed to Store test file")
+			return
+		}
+
+		falseHash := "11111111111111111111"
+
+		err = Delete(falseHash, os.TempDir())
+		if err == nil || err.Error() != "argError: Hash folder does not exist" {
+			t.Errorf("Expected error (Hash folder does not exist) does not equal Actual error (%s)", err.Error())
 		}
 	})
 }

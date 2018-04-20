@@ -48,10 +48,20 @@ func Store(hash string, r io.Reader, length int64, offset int64, dir string) err
 	if len(hash) < 20 {
 		return ArgError.New("Hash is too short. Must be atleast 20 bytes")
 	}
-
+	if offset < 0 {
+		return ArgError.New("Offset is less than 0. Must be greater than or equal to 0")
+	}
+	if length < 0 {
+		return ArgError.New("Length is less than 0. Must be greater than or equal to 0")
+	}
 	if dir == "" {
 		return ArgError.New("No path provided")
 	}
+
+	// fileInfo, err := os.Stat(r)
+	// if err != nil {
+	// 	return err
+	// }
 
 	dataPath, err := pathByHash(hash, dir)
 	if err != nil {
@@ -164,6 +174,10 @@ func Delete(hash string, dir string) error {
 	dataPath, err := pathByHash(hash, dir)
 	if err != nil {
 		return err
+	}
+
+	if _, err = os.Stat(dataPath); os.IsNotExist(err) {
+		return ArgError.New("Hash folder does not exist")
 	}
 
 	if err = os.Remove(dataPath); err != nil {

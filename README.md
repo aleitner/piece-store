@@ -2,7 +2,7 @@
 
 Build the CLI example App
 ```BASH
-vgo build -o piece-store-cli cmd/piece-store-cli/main.go
+vgo build -o piece-store-cli cmd/piece-store-cli/pscli.go
 ```
 
 Build the Server example App
