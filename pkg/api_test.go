@@ -364,89 +364,89 @@ func TestRetrieve(t *testing.T) {
 		}
 	})
 
-		// Test passing in negative offset
-		t.Run("it should return an error when retrieving with offset less 0", func(t *testing.T) {
-			assert := assert.New(t)
-			file, err := os.Open(tmpfile)
-			if err != nil {
-				t.Errorf("Error opening tmp file: %s", err.Error())
-				return
-			}
+	// Test passing in negative offset
+	t.Run("it should return an error when retrieving with offset less 0", func(t *testing.T) {
+		assert := assert.New(t)
+		file, err := os.Open(tmpfile)
+		if err != nil {
+			t.Errorf("Error opening tmp file: %s", err.Error())
+			return
+		}
 
-			fi, err := file.Stat()
-			if err != nil {
-				t.Errorf("Could not stat test file: %s", err.Error())
-				return
-			}
+		fi, err := file.Stat()
+		if err != nil {
+			t.Errorf("Could not stat test file: %s", err.Error())
+			return
+		}
 
-			defer file.Close()
+		defer file.Close()
 
-			hash := "0123456789ABCDEFGHIJ"
-			Store(hash, file, int64(fi.Size()), 0, os.TempDir())
+		hash := "0123456789ABCDEFGHIJ"
+		Store(hash, file, int64(fi.Size()), 0, os.TempDir())
 
-			// Create file for retrieving data into
-			retrievalFilePath := path.Join(os.TempDir(), "retrieved.txt")
-			retrievalFile, err := os.OpenFile(retrievalFilePath, os.O_RDWR|os.O_CREATE, 0777)
-			if err != nil {
-				t.Errorf("Error creating file: %s", err.Error())
-				return
-			}
-			defer os.RemoveAll(retrievalFilePath)
-			defer retrievalFile.Close()
+		// Create file for retrieving data into
+		retrievalFilePath := path.Join(os.TempDir(), "retrieved.txt")
+		retrievalFile, err := os.OpenFile(retrievalFilePath, os.O_RDWR|os.O_CREATE, 0777)
+		if err != nil {
+			t.Errorf("Error creating file: %s", err.Error())
+			return
+		}
+		defer os.RemoveAll(retrievalFilePath)
+		defer retrievalFile.Close()
 
-			err = Retrieve(hash, retrievalFile, int64(fi.Size()), -1, os.TempDir())
-			assert.NotNil(err)
-			if err != nil {
-				assert.Equal("argError: Invalid offset: -1", err.Error(), err.Error())
-			}
-		})
+		err = Retrieve(hash, retrievalFile, int64(fi.Size()), -1, os.TempDir())
+		assert.NotNil(err)
+		if err != nil {
+			assert.Equal("argError: Invalid offset: -1", err.Error(), err.Error())
+		}
+	})
 
-		// Test passing in negative length
-		t.Run("it should return the entire file successfully when retrieving with negative length", func(t *testing.T) {
-			file, err := os.Open(tmpfile)
-			if err != nil {
-				t.Errorf("Error opening tmp file: %s", err.Error())
-				return
-			}
+	// Test passing in negative length
+	t.Run("it should return the entire file successfully when retrieving with negative length", func(t *testing.T) {
+		file, err := os.Open(tmpfile)
+		if err != nil {
+			t.Errorf("Error opening tmp file: %s", err.Error())
+			return
+		}
 
-			fi, err := file.Stat()
-			if err != nil {
-				t.Errorf("Could not stat test file: %s", err.Error())
-				return
-			}
+		fi, err := file.Stat()
+		if err != nil {
+			t.Errorf("Could not stat test file: %s", err.Error())
+			return
+		}
 
-			defer file.Close()
+		defer file.Close()
 
-			hash := "0123456789ABCDEFGHIJ"
-			Store(hash, file, int64(fi.Size()), 0, os.TempDir())
+		hash := "0123456789ABCDEFGHIJ"
+		Store(hash, file, int64(fi.Size()), 0, os.TempDir())
 
-			// Create file for retrieving data into
-			retrievalFilePath := path.Join(os.TempDir(), "retrieved.txt")
-			retrievalFile, err := os.OpenFile(retrievalFilePath, os.O_RDWR|os.O_CREATE, 0777)
-			if err != nil {
-				t.Errorf("Error creating file: %s", err.Error())
-				return
-			}
-			defer os.RemoveAll(retrievalFilePath)
-			defer retrievalFile.Close()
+		// Create file for retrieving data into
+		retrievalFilePath := path.Join(os.TempDir(), "retrieved.txt")
+		retrievalFile, err := os.OpenFile(retrievalFilePath, os.O_RDWR|os.O_CREATE, 0777)
+		if err != nil {
+			t.Errorf("Error creating file: %s", err.Error())
+			return
+		}
+		defer os.RemoveAll(retrievalFilePath)
+		defer retrievalFile.Close()
 
-			err = Retrieve(hash, retrievalFile, -1, 0, os.TempDir())
+		err = Retrieve(hash, retrievalFile, -1, 0, os.TempDir())
 
-			if err != nil {
-				t.Errorf("Retrieve Error: %s", err.Error())
-			}
+		if err != nil {
+			t.Errorf("Retrieve Error: %s", err.Error())
+		}
 
-			buffer := make([]byte, 5)
+		buffer := make([]byte, 5)
 
-			retrievalFile.Seek(0, 0)
-			_, _ = retrievalFile.Read(buffer)
+		retrievalFile.Seek(0, 0)
+		_, _ = retrievalFile.Read(buffer)
 
-			fmt.Printf("Retrieved data: %s", string(buffer))
+		fmt.Printf("Retrieved data: %s", string(buffer))
 
-			if string(buffer) != "butts" {
-				t.Errorf("Expected data butts does not equal Actual data %s", string(buffer))
-			}
-		})
+		if string(buffer) != "butts" {
+			t.Errorf("Expected data butts does not equal Actual data %s", string(buffer))
+		}
+	})
 
 }
 
