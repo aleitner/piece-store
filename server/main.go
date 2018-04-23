@@ -72,7 +72,7 @@ func DownloadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	lengthStr := strings.Join(r.Form["length"], "")
 	length64, _ := strconv.ParseInt(lengthStr, 10, 64)
 	if lengthStr == "" && length64 <= 0 {
-		length = 0
+		length = -1
 	} else {
 		length = length64
 	}
@@ -99,11 +99,6 @@ func DownloadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
 
 	fmt.Printf("Successfully downloaded file %s...\n", hash)
-
-	// w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	// message := fmt.Sprintf("Successfully downloaded file! \nHash: %s\nSize: %v\n", hash, length)
-	// message = fmt.Sprintf("%s\n<a href=\"/files/\">List files</a>", message)
-	// w.Write([]byte(message))
 }
 
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

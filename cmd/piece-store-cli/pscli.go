@@ -84,7 +84,7 @@ func main() {
 					return ArgError.New(fmt.Sprintf("Path (%s) is a file, not a directory", c.Args().Get(1)))
 				}
 
-				err = pstore.Retrieve(c.Args().Get(0), os.Stdout, 5, 0, c.Args().Get(1))
+				err = pstore.Retrieve(c.Args().Get(0), os.Stdout, -1, 0, c.Args().Get(1))
 
 				return err
 			},
