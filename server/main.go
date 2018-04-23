@@ -1,13 +1,14 @@
 package main
 import (
-  "github.com/aleitner/piece-store/pkg"
   "fmt"
-  "github.com/julienschmidt/httprouter"
-  "net/http"
-  "log"
   "html/template"
-  "strings"
+  "log"
+  "net/http"
   "strconv"
+  "strings"
+
+  "github.com/aleitner/piece-store/pkg"
+  "github.com/julienschmidt/httprouter"
 )
 
 const dataDir = "./piece-store-data"

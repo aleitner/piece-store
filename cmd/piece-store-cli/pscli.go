@@ -5,12 +5,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/aleitner/piece-store/pkg"
-	"github.com/urfave/cli"
-	"github.com/zeebo/errs"
 	"log"
 	"os"
 	"sort"
+
+	"github.com/aleitner/piece-store/pkg"
+	"github.com/urfave/cli"
+	"github.com/zeebo/errs"
 )
 
 var ArgError = errs.Class("argError")
