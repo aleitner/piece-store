@@ -1,7 +1,4 @@
-// Copyright (C) 2018 Storj Labs, Inc.
-// See LICENSE for copying information.
-
-package pstore // import "storj.io/storj/pkg/pstore"
+package pstore // import "github.com/aleitner/pstore"
 
 import (
 	"fmt"

@@ -1,6 +1,3 @@
-// Copyright (C) 2018 Storj Labs, Inc.
-// See LICENSE for copying information.
-
 package main
 
 import (
@@ -9,7 +6,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/aleitner/piece-store/pkg"
+	"github.com/aleitner/piece-store/src"
 	"github.com/urfave/cli"
 	"github.com/zeebo/errs"
 )

@@ -2,15 +2,26 @@
 
 Build the CLI example App
 ```BASH
-vgo build -o piece-store-cli cmd/piece-store-cli/pscli.go
+vgo build -o bin/piece-store-cli cli/pscli.go
 ```
 
 Build the Server example App
 ```BASH
-vgo build -o piece-store-server server/main.go server/utils.go
+vgo build -o bin/piece-store-server server/main.go server/utils.go
 ```
-Server is available at `127.0.0.1:8080`
 
+## Run
+
+Running CLI
+```BASH
+./bin/piece-store-cli [CMD] (ARGS)
+```
+
+Running the server
+```BASH
+./bin/piece-store-server ($PORT)
+```
+* Default Server is available at `127.0.0.1:8080`
 
 ## Run Tests
 

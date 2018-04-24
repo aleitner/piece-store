@@ -5,14 +5,17 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/aleitner/piece-store/pkg"
+	"github.com/aleitner/piece-store/src"
 	"github.com/julienschmidt/httprouter"
 )
 
-const dataDir = "./piece-store-data"
+var dataDir string
 
 func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
@@ -135,6 +138,16 @@ func renderByPath(w http.ResponseWriter, path string) error {
 }
 
 func main() {
+	port := "8080"
+
+	if len(os.Args) > 1 {
+			if matched, _ := regexp.MatchString(`^\d{2,6}$`, os.Args[1]); matched == true {
+				port = os.Args[1]
+			}
+	}
+
+	dataDir = path.Join("./piece-store-data/", port)
+
 	router := httprouter.New()
 	router.GET("/", Index)
 	router.GET("/upload", ShowUploadForm)
@@ -142,5 +155,5 @@ func main() {
 	router.ServeFiles("/files/*filepath", http.Dir(dataDir))
 	router.POST("/upload", UploadFile)
 	router.POST("/download", DownloadFile)
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":" + port, router))
 }
