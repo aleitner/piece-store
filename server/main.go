@@ -47,11 +47,16 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		dataOffset = dataOffsetInt64
 	}
 
+	dataHash := strings.Join(r.Form["hash"], "")
+	if dataHash == "" {
+		dataHash = String(20)
+	}
+
 	defer file.Close()
 	fmt.Printf("Uploading file (%s), Offset: (%v), Size: (%v)...\n", header.Filename, dataOffset, dataSize)
 
 	hash := String(20)
-	err = pstore.Store(hash, file, dataSize, dataOffset, dataDir)
+	err = pstore.Store(dataHash, file, dataSize, dataOffset, dataDir)
 
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
@@ -61,7 +66,7 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Printf("Successfully uploaded file %s...\n", header.Filename)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	message := fmt.Sprintf("Successfully uploaded file!\nName: %s\nHash: %s\nSize: %v\n", header.Filename, hash, header.Size)
+	message := fmt.Sprintf("Successfully uploaded file!\nName: %s\nHash: %s\nSize: %v\n", header.Filename, dataHash, header.Size)
 	message = fmt.Sprintf("%s\n<a href=\"/files/\">List files</a>", message)
 	w.Write([]byte(message))
 }
