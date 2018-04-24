@@ -1,9 +1,6 @@
-// Copyright (C) 2018 Storj Labs, Inc.
-// See LICENSE for copying information.
-
 // store, retrieve, and delete data from Storj farmers
 
-package pstore // import "storj.io/storj/pkg/pstore"
+package pstore // import "github.com/aleitner/pstore"
 
 import (
 	"io"

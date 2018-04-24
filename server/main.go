@@ -5,14 +5,17 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"path"
+	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/aleitner/piece-store/pkg"
+	"github.com/aleitner/piece-store/src"
 	"github.com/julienschmidt/httprouter"
 )
 
-const dataDir = "./piece-store-data"
+var dataDir string
 
 func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
@@ -44,11 +47,16 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		dataOffset = dataOffsetInt64
 	}
 
+	dataHash := strings.Join(r.Form["hash"], "")
+	if dataHash == "" {
+		dataHash = String(20)
+	}
+
 	defer file.Close()
 	fmt.Printf("Uploading file (%s), Offset: (%v), Size: (%v)...\n", header.Filename, dataOffset, dataSize)
 
 	hash := String(20)
-	err = pstore.Store(hash, file, dataSize, dataOffset, dataDir)
+	err = pstore.Store(dataHash, file, dataSize, dataOffset, dataDir)
 
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
@@ -58,7 +66,7 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Printf("Successfully uploaded file %s...\n", header.Filename)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	message := fmt.Sprintf("Successfully uploaded file!\nName: %s\nHash: %s\nSize: %v\n", header.Filename, hash, header.Size)
+	message := fmt.Sprintf("Successfully uploaded file!\nName: %s\nHash: %s\nSize: %v\n", header.Filename, dataHash, header.Size)
 	message = fmt.Sprintf("%s\n<a href=\"/files/\">List files</a>", message)
 	w.Write([]byte(message))
 }
@@ -135,6 +143,16 @@ func renderByPath(w http.ResponseWriter, path string) error {
 }
 
 func main() {
+	port := "8080"
+
+	if len(os.Args) > 1 {
+			if matched, _ := regexp.MatchString(`^\d{2,6}$`, os.Args[1]); matched == true {
+				port = os.Args[1]
+			}
+	}
+
+	dataDir = path.Join("./piece-store-data/", port)
+
 	router := httprouter.New()
 	router.GET("/", Index)
 	router.GET("/upload", ShowUploadForm)
@@ -142,5 +160,5 @@ func main() {
 	router.ServeFiles("/files/*filepath", http.Dir(dataDir))
 	router.POST("/upload", UploadFile)
 	router.POST("/download", DownloadFile)
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":" + port, router))
 }
