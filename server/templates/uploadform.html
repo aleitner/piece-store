@@ -20,9 +20,17 @@
 
       <!-- Text input-->
       <div class="form-group">
+        <label class="col-md-4 control-label" for="hash">Hash</label>
+        <div class="col-md-4">
+        <input id="hash" name="hash" placeholder="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" class="form-control input-md" type="text">
+        </div>
+      </div>
+
+      <!-- Text input-->
+      <div class="form-group">
         <label class="col-md-4 control-label" for="offset">Data offset</label>
         <div class="col-md-4">
-        <input id="dataOffset" name="offset" type="number" class="form-control input-md">
+        <input id="offset" name="offset" placeholder="0" type="number" class="form-control input-md">
         </div>
       </div>
 
@@ -30,7 +38,7 @@
       <div class="form-group">
         <label class="col-md-4 control-label" for="size">Data size</label>
         <div class="col-md-4">
-        <input id="dataSize" name="size" type="number" class="form-control input-md">
+        <input id="size" name="size" placeholder="-1" type="number" class="form-control input-md">
         </div>
       </div>
 

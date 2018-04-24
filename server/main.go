@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"path"
 	"regexp"
@@ -19,7 +20,7 @@ var dataDir string
 
 func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
-	// in your case file would be fileupload
+  // in your case file would be fileupload
 	file, header, err := r.FormFile("uploadfile")
 	if err != nil {
 		fmt.Printf("Error: ", err.Error())
@@ -32,7 +33,7 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var dataSize int64
 	dataSizeStr := strings.Join(r.Form["size"], "")
 	dataSizeInt64, _ := strconv.ParseInt(dataSizeStr, 10, 64)
-	if dataSizeStr == "" || dataSizeInt64 <= 0 {
+	if dataSizeStr == "" || dataSizeInt64 < 0 {
 		dataSize = header.Size
 	} else {
 		dataSize = dataSizeInt64
@@ -41,7 +42,7 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var dataOffset int64
 	dataOffsetStr := strings.Join(r.Form["offset"], "")
 	dataOffsetInt64, _ := strconv.ParseInt(dataOffsetStr, 10, 64)
-	if dataOffsetStr == "" && dataOffsetInt64 <= 0 {
+	if dataOffsetStr == "" && dataOffsetInt64 < 0 {
 		dataOffset = 0
 	} else {
 		dataOffset = dataOffsetInt64
@@ -55,7 +56,6 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	defer file.Close()
 	fmt.Printf("Uploading file (%s), Offset: (%v), Size: (%v)...\n", header.Filename, dataOffset, dataSize)
 
-	hash := String(20)
 	err = pstore.Store(dataHash, file, dataSize, dataOffset, dataDir)
 
 	if err != nil {
@@ -150,6 +150,8 @@ func main() {
 				port = os.Args[1]
 			}
 	}
+
+	fmt.Printf("Starting server at port %s...\n", port)
 
 	dataDir = path.Join("./piece-store-data/", port)
 
