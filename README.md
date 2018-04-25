@@ -26,7 +26,7 @@ Running the server
 ## Run Tests
 
 ```BASH
-vgo test pkg/*
+vgo test src/*
 ```
 
 ### Storage

@@ -35,15 +35,15 @@ func pathByHash(hash, dir string) (string, error) {
 
 	Store data into piece store
 
-	hash 		(string)		Hash of the data to be stored
-	r 			(io.Reader)	File/Stream that contains the contents of the data to be stored
-	length 	(length)		Size of the data to be stored
-	offset 	(offset)		Offset of the data that you are writing. Useful for multiple connections to split the data transfer
-	dir 		(string)		pstore directory containing all other data stored
-	returns (error) if failed and nil if successful
+	hash 		(string)				Hash of the data to be stored
+	r 			(io.Reader)			File/Stream that contains the contents of the data to be stored
+	length 	(length)				Size of the data to be stored
+	psFileOffset 	(offset)  Offset of the data that you are writing. Useful for multiple connections to split the data transfer
+	dir 		(string)				pstore directory containing all other data stored
+	returns (error) if 		  failed and nil if successful
 */
-func Store(hash string, r io.Reader, length int64, offset int64, dir string) error {
-	if offset < 0 {
+func Store(hash string, r io.Reader, length int64, psFileOffset int64, dir string) error {
+	if psFileOffset < 0 {
 		return ArgError.New("Offset is less than 0. Must be greater than or equal to 0")
 	}
 	if length < 0 {
@@ -72,8 +72,8 @@ func Store(hash string, r io.Reader, length int64, offset int64, dir string) err
 	// Close when finished
 	defer dataFile.Close()
 
-	dataFile.Seek(offset, 0)
-
+	// TODO: If multiple people are writing to this file the seek could mess up???
+	dataFile.Seek(psFileOffset, 0)
 	if _, err := io.CopyN(dataFile, r, length); err != nil {
 		if err != io.EOF {
 			return err
@@ -88,14 +88,14 @@ func Store(hash string, r io.Reader, length int64, offset int64, dir string) err
 
 	Retrieve data from pstore directory
 
-	hash 		(string)		Hash of the stored data
-	w 			(io.Writer)	File/Stream that recieves the stored data
-	length 	(length)		Amount of data to read. Read all data if -1
-	offset 	(offset)		Offset of the data that you are reading. Useful for multiple connections to split the data transfer
-	dir 		(string)		pstore directory containing all other data stored
-	returns (error) if failed and nil if successful
+	hash 					(string)		Hash of the stored data
+	w 						(io.Writer)	Stream that recieves the stored data
+	length 				(length)		Amount of data to read. Read all data if -1
+	readPosOffset	(offset)		Offset of the data that you are reading. Useful for multiple connections to split the data transfer
+	dir 					(string)		pstore directory containing all other data stored
+	returns 			(error) if failed and nil if successful
 */
-func Retrieve(hash string, w io.Writer, length int64, offset int64, dir string) error {
+func Retrieve(hash string, w io.Writer, length int64, readPosOffset int64, dir string) error {
 	if dir == "" {
 		return ArgError.New("No path provided")
 	}
@@ -111,8 +111,8 @@ func Retrieve(hash string, w io.Writer, length int64, offset int64, dir string) 
 	}
 
 	// If offset is greater than file size return
-	if offset >= fileInfo.Size() || offset < 0 {
-		return ArgError.New("Invalid offset: %v", offset)
+	if readPosOffset >= fileInfo.Size() || readPosOffset < 0 {
+		return ArgError.New("Invalid offset: %v", readPosOffset)
 	}
 
 	// If length less than 0 read the entire file
@@ -121,8 +121,8 @@ func Retrieve(hash string, w io.Writer, length int64, offset int64, dir string) 
 	}
 
 	// If trying to read past the end of the file, just read to the end
-	if fileInfo.Size() < offset+length {
-		length = fileInfo.Size() - offset
+	if fileInfo.Size() < readPosOffset+length {
+		length = fileInfo.Size() - readPosOffset
 	}
 
 	dataFile, err := os.OpenFile(dataPath, os.O_RDONLY, 0755)
@@ -132,9 +132,10 @@ func Retrieve(hash string, w io.Writer, length int64, offset int64, dir string) 
 	// Close when finished
 	defer dataFile.Close()
 
-	dataFile.Seek(offset, 0)
+	// Created a section reader so that we can concurrently retrieve the same file.
+	dataFileSection := io.NewSectionReader(dataFile, readPosOffset, length)
 
-	if _, err := io.CopyN(w, dataFile, length); err != nil {
+	if _, err := io.Copy(w, dataFileSection); err != nil {
 		if err != io.EOF {
 			return err
 		}

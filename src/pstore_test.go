@@ -104,7 +104,7 @@ func TestStore(t *testing.T) {
 		expected := []byte{0, 0, 98, 117, 116, 116, 115}
 
 		if string(buffer) != string(expected) {
-			t.Errorf("Expected data %s does not equal Actual data %s", string(expected), string(buffer))
+			t.Errorf("Expected data (%v) does not equal Actual data (%v)", expected, buffer)
 		}
 	})
 
