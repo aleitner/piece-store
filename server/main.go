@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"net/http/httputil"
+	// "net/http/httputil"
 	"os"
 	"path"
 	"regexp"
@@ -54,7 +54,7 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	defer file.Close()
-	fmt.Printf("Uploading file (%s), Offset: (%v), Size: (%v)...\n", header.Filename, dataOffset, dataSize)
+	fmt.Printf("Uploading file (%s), Hash: (%s), Offset: (%v), Size: (%v)...\n", header.Filename, dataHash, dataOffset, dataSize)
 
 	err = pstore.Store(dataHash, file, dataSize, dataOffset, dataDir)
 
@@ -63,11 +63,11 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 
-	fmt.Printf("Successfully uploaded file %s...\n", header.Filename)
+	success := fmt.Sprintf("Successfully uploaded file!\nName: %s\nHash: %s\nSize: %v\n", header.Filename, dataHash, header.Size)
+	fmt.Printf(success)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	message := fmt.Sprintf("Successfully uploaded file!\nName: %s\nHash: %s\nSize: %v\n", header.Filename, dataHash, header.Size)
-	message = fmt.Sprintf("%s\n<a href=\"/files/\">List files</a>", message)
+	message := fmt.Sprintf("%s\n<a href=\"/files/\">List files</a>", success)
 	w.Write([]byte(message))
 }
 

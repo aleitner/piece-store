@@ -11,4 +11,4 @@ $DIR"/../bin/piece-store-server" 8085 &
 $DIR"/../bin/piece-store-server" 8086 &
 $DIR"/../bin/piece-store-server" 8087 &
 $DIR"/../bin/piece-store-server" 8088 &
-$DIR"/../bin/piece-store-server" 8089
+$DIR"/../bin/piece-store-server" 8089 &
