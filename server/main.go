@@ -19,7 +19,7 @@ var dataDir string
 
 func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
-  // in your case file would be fileupload
+	// in your case file would be fileupload
 	file, header, err := r.FormFile("uploadfile")
 	if err != nil {
 		fmt.Printf("Error: ", err.Error())
@@ -145,9 +145,9 @@ func main() {
 	port := "8080"
 
 	if len(os.Args) > 1 {
-			if matched, _ := regexp.MatchString(`^\d{2,6}$`, os.Args[1]); matched == true {
-				port = os.Args[1]
-			}
+		if matched, _ := regexp.MatchString(`^\d{2,6}$`, os.Args[1]); matched == true {
+			port = os.Args[1]
+		}
 	}
 
 	fmt.Printf("Starting server at port %s...\n", port)
@@ -161,5 +161,5 @@ func main() {
 	router.ServeFiles("/files/*filepath", http.Dir(dataDir))
 	router.POST("/upload", UploadFile)
 	router.POST("/download", DownloadFile)
-	log.Fatal(http.ListenAndServe(":" + port, router))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
