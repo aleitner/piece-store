@@ -39,13 +39,13 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		dataSize = dataSizeInt64
 	}
 
-	var dataOffset int64
-	dataOffsetStr := strings.Join(r.Form["offset"], "")
-	dataOffsetInt64, _ := strconv.ParseInt(dataOffsetStr, 10, 64)
-	if dataOffsetStr == "" && dataOffsetInt64 < 0 {
-		dataOffset = 0
+	var pstoreOffset int64
+	pstoreOffsetStr := strings.Join(r.Form["offset"], "")
+	pstoreOffsetInt64, _ := strconv.ParseInt(pstoreOffsetStr, 10, 64)
+	if pstoreOffsetStr == "" && pstoreOffsetInt64 < 0 {
+		pstoreOffset = 0
 	} else {
-		dataOffset = dataOffsetInt64
+		pstoreOffset = pstoreOffsetInt64
 	}
 
 	dataHash := strings.Join(r.Form["hash"], "")
@@ -54,9 +54,9 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 
 	defer file.Close()
-	fmt.Printf("Uploading file (%s), Hash: (%s), Offset: (%v), Size: (%v)...\n", header.Filename, dataHash, dataOffset, dataSize)
+	fmt.Printf("Uploading file (%s), Hash: (%s), Offset: (%v), Size: (%v)...\n", header.Filename, dataHash, pstoreOffset, dataSize)
 
-	err = pstore.Store(dataHash, file, dataSize, dataOffset, dataDir)
+	err = pstore.Store(dataHash, file, dataSize, pstoreOffset, dataDir)
 
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
@@ -85,17 +85,17 @@ func DownloadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		length = length64
 	}
 
-	var dataOffset int64
-	dataOffsetStr := strings.Join(r.Form["offset"], "")
-	dataOffsetInt64, _ := strconv.ParseInt(dataOffsetStr, 10, 64)
-	if dataOffsetStr == "" && dataOffsetInt64 <= 0 {
-		dataOffset = 0
+	var pstoreOffset int64
+	pstoreOffsetStr := strings.Join(r.Form["offset"], "")
+	pstoreOffsetInt64, _ := strconv.ParseInt(pstoreOffsetStr, 10, 64)
+	if pstoreOffsetStr == "" && pstoreOffsetInt64 <= 0 {
+		pstoreOffset = 0
 	} else {
-		dataOffset = dataOffsetInt64
+		pstoreOffset = pstoreOffsetInt64
 	}
-	fmt.Printf("Downloading file (%s), Offset: (%v), Size: (%v)...\n", hash, dataOffset, length)
+	fmt.Printf("Downloading file (%s), Offset: (%v), Size: (%v)...\n", hash, pstoreOffset, length)
 
-	err := pstore.Retrieve(hash, w, length, dataOffset, dataDir)
+	err := pstore.Retrieve(hash, w, length, pstoreOffset, dataDir)
 
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
