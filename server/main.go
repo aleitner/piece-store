@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	// "net/http/httputil"
 	"os"
 	"path"
 	"regexp"
