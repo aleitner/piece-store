@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"html/template"
 	"log"
@@ -10,12 +11,15 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aleitner/piece-store/src"
 	"github.com/julienschmidt/httprouter"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var dataDir string
+var dbPath string
 
 func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
@@ -29,6 +33,21 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// We have to do stupid conversions
 	// Is there a better way to convert []string into ints?
 	r.ParseForm()
+
+	// get Unix TTL
+	ttlStr := strings.Join(r.Form["ttl"], "")
+	ttl, err := strconv.ParseInt(ttlStr, 10, 32)
+	if err != nil {
+		fmt.Printf("Error: ", err.Error())
+		return
+	}
+	if ttl <= time.Now().Unix() {
+		fmt.Printf("Error: Invalid TTL. Expiration date has already passed")
+		return
+	}
+	// convert Unix to datetime UTC
+	ttlDate := time.Unix(ttl, 0).UTC()
+
 	var dataSize int64
 	dataSizeStr := strings.Join(r.Form["size"], "")
 	dataSizeInt64, _ := strconv.ParseInt(dataSizeStr, 10, 64)
@@ -57,6 +76,19 @@ func UploadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	err = pstore.Store(dataHash, file, dataSize, pstoreOffset, dataDir)
 
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		return
+	}
+
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		fmt.Printf("Error: %s\n", err.Error())
+		return
+	}
+  defer db.Close()
+
+  _, err = db.Exec(fmt.Sprintf(`INSERT INTO ttl (hash, created, expires) VALUES ("%s", "%v", "%v")`, dataHash, time.Now().UTC(), ttlDate))
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		return
@@ -151,6 +183,18 @@ func main() {
 	}
 
 	fmt.Printf("Starting server at port %s...\n", port)
+
+	dbPath = "ttl-data.db"
+
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS `ttl` (`hash` TEXT, `created` DATETIME, `expires` DATETIME);")
+	if err != nil {
+		log.Fatal(err)
+	}
+	db.Close()
 
 	dataDir = path.Join("./piece-store-data/", port)
 
