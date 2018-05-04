@@ -145,7 +145,7 @@ func DownloadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func DeleteFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	r.ParseForm()
 	hash := strings.Join(r.Form["hash"], "")
-	fmt.Printf(hash)
+
 	db, err := sql.Open("sqlite3", dbPath)
 	defer db.Close()
 	_, err = db.Exec(fmt.Sprintf(`DELETE FROM ttl WHERE hash="%s"`, hash))
@@ -201,37 +201,42 @@ func renderByPath(w http.ResponseWriter, path string) error {
 	return nil
 }
 
-//go routine to check ttl database for expired entries
+// go routine to check ttl database for expired entries
+// pass in DB and location of file for deletion
 func dbChecker(db *sql.DB, dir string) {
 	tickChan := time.NewTicker(time.Second * 5).C
 	for {
 		select {
 		case <-tickChan:
-			rows, err := db.Query(fmt.Sprintf(`SELECT hash, expires FROM ttl WHERE expires < %d`, time.Now().Unix()))
+			rows, err := db.Query(fmt.Sprintf("SELECT hash, expires FROM ttl WHERE expires < %d", time.Now().Unix()))
 			if err != nil {
 				fmt.Printf("Error: ", err.Error())
 			}
 			defer rows.Close()
 
+			// iterate though selected rows
+			// tried to wrap this inside (if rows != nil) but seems rows has value even if no entries meet condition. Thoughts?
 			for rows.Next() {
 				var expHash string
 				var expires int64
 
 				err = rows.Scan(&expHash, &expires)
 				if err != nil {
-					fmt.Printf("Error scanning: ", err.Error())
+					fmt.Printf("Error: ", err.Error())
 					return
 				}
 
+				// delete file on local machine
 				err = pstore.Delete(expHash, dir)
 				if err != nil {
 					fmt.Printf("Error: ", err.Error())
 					return
 				}
-				fmt.Println("Deleted: ", expHash)
+				fmt.Println("Deleted file: ", expHash)
 			}
 
-			_, err = db.Exec(fmt.Sprintf(`DELETE FROM ttl WHERE expires < "%d"`, time.Now().Unix()))
+			// getting error when attempting to delete DB entry while inside it, so deleting outside for loop. Thoughts?
+			_, err = db.Exec(fmt.Sprintf("DELETE FROM ttl WHERE expires < %d", time.Now().Unix()))
 			if err != nil {
 				fmt.Printf("Error: ", err.Error())
 				return
