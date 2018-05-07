@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/context"
 
 	pb "github.com/aleitner/piece-store/routeguide"
+	"github.com/aleitner/piece-store/src"
 )
 
 type Server struct {
