@@ -19,7 +19,7 @@ message ShardStore {
   int64 ttl = 3;
   int64 storeOffset = 4;
 
-  string content = 5;
+  bytes content = 5;
 }
 
 message ShardRetrieval {
@@ -29,7 +29,7 @@ message ShardRetrieval {
 }
 
 message ShardRetrievalStream {
-  string content = 1;
+  bytes content = 1;
 }
 
 message ShardDelete {
