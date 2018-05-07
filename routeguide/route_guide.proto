@@ -6,9 +6,9 @@ service RouteGuide {
 
   rpc Retrieve(ShardRetrieval) returns (stream ShardRetrievalStream) {}
 
-  rpc Store(stream ShardStore) returns (Summary) {}
+  rpc Store(stream ShardStore) returns (ShardStoreSummary) {}
 
-  rpc Delete(ShardDelete) returns (Summary) {}
+  rpc Delete(ShardDelete) returns (ShardDeleteSummary) {}
 
 }
 
@@ -36,6 +36,15 @@ message ShardDelete {
   string hash = 1;
 }
 
-message Summary {
-  string message = 1;
+message ShardDeleteSummary {
+  int64 status = 1;
+  string message = 2;
+  int64 elapsedTime = 4;
+}
+
+message ShardStoreSummary {
+  int64 status = 1;
+  string message = 2;
+  int64 totalReceived = 3;
+  int64 elapsedTime = 4;
 }

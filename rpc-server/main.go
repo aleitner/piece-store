@@ -8,6 +8,9 @@ import (
 	"fmt"
   "log"
 	"net"
+	"os"
+	"path"
+	"regexp"
 
 	"google.golang.org/grpc"
 
@@ -17,13 +20,23 @@ import (
 )
 
 func main() {
-  // create a listener on TCP port 7777
-  lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 7777))
+	port := "7777"
+
+	if len(os.Args) > 1 {
+		if matched, _ := regexp.MatchString(`^\d{2,6}$`, os.Args[1]); matched == true {
+			port = os.Args[1]
+		}
+	}
+
+	dataDir := path.Join("./piece-store-data/", port)
+
+  // create a listener on TCP port
+  lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
   if err != nil {
     log.Fatalf("failed to listen: %v", err)
   }
   // create a server instance
-  s := api.Server{}
+  s := api.Server{dataDir}
 
   // create a gRPC server object
   grpcServer := grpc.NewServer()
