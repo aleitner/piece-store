@@ -26,7 +26,9 @@ func StoreShardRequest(conn *grpc.ClientConn, hash string, data *os.File, length
     }
 
     // Write the buffer to the stream we opened earlier
-    stream.Send(&ps.ShardStore{Hash: hash, Size: length, Ttl: ttl, StoreOffset: offset, Content: buffer[:n]})
+    if err := stream.Send(&ps.ShardStore{Hash: hash, Size: length, Ttl: ttl, StoreOffset: offset, Content: buffer[:n]}); err != nil {
+  		log.Fatalf("%v.Send() = %v", stream, err)
+  	}
   }
 
   reply, err := stream.CloseAndRecv()
