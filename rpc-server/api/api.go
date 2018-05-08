@@ -27,6 +27,7 @@ func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
 	for {
 		shardData, err := stream.Recv()
 		if err == io.EOF {
+			fmt.Println("Successfully stored data...")
 			endTime := time.Now()
 			return stream.SendAndClose(&pb.ShardStoreSummary{
 				Status:   0,
@@ -45,10 +46,11 @@ func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
 		err = pstore.Store(shardData.Hash, bytes.NewReader(shardData.Content), length, total + shardData.StoreOffset, s.PieceStoreDir)
 
 		if err != nil {
+			fmt.Println("Store data Error: ", err.Error())
 			endTime := time.Now()
 			return stream.SendAndClose(&pb.ShardStoreSummary{
-				Status:   0,
-				Message: "FAIL",
+				Status:   -1,
+				Message: err.Error(),
 				TotalReceived: total,
 				ElapsedTime:  int64(endTime.Sub(startTime).Seconds()),
 			})

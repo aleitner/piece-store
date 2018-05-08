@@ -7,8 +7,10 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"path/filepath"
 
 	"google.golang.org/grpc"
 
@@ -55,17 +57,27 @@ func main() {
 					return ArgError.New(fmt.Sprintf("Path (%s) is a directory, not a file", c.Args().Get(0)))
 				}
 
-				var offset int64 = 0
+				var fileOffset, storeOffset int64 = 0, 0
 				var length int64 = fileInfo.Size()
 				var ttl int64 = 86400
 
-				hash, err := utils.DetermineHash(file, offset, length)
+				hash, err := utils.DetermineHash(file, fileOffset, length)
 				if err != nil {
 					return err
 				}
 
-				err = api.StoreShardRequest(conn, hash, file, length, ttl, offset)
-        return err
+				// Created a section reader so that we can concurrently retrieve the same file.
+				dataSection := io.NewSectionReader(file, fileOffset, length)
+
+				err = api.StoreShardRequest(conn, hash, dataSection, fileOffset, length, ttl, storeOffset)
+
+				if err != nil {
+					fmt.Printf("Failed to store file of hash: %s\n", hash)
+					return err
+				}
+
+				fmt.Printf("successfully Stored file of hash: %s\n", hash)
+        return nil
       },
     },
     {
@@ -73,6 +85,31 @@ func main() {
       Aliases: []string{"d"},
       Usage:   "download data",
       Action:  func(c *cli.Context) error {
+				if c.Args().Get(0) == "" {
+					return ArgError.New("No hash specified")
+				}
+
+				if c.Args().Get(1) == "" {
+					return ArgError.New("No output file specified")
+				}
+				_, err := os.Stat(c.Args().Get(1))
+
+				if !os.IsNotExist(err) {
+					return ArgError.New("Path already exists: "+ c.Args().Get(1))
+				}
+
+				dataPath := c.Args().Get(1)
+
+				if err = os.MkdirAll(filepath.Dir(dataPath), 0700); err != nil {
+					return err
+				}
+
+				// Create File on file system
+				dataFile, err := os.OpenFile(dataPath, os.O_RDWR|os.O_CREATE, 0755)
+				if err != nil {
+					return err
+				}
+
         return nil
       },
     },
