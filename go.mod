@@ -1,7 +1,7 @@
 module "github.com/aleitner/piece-store"
 
 require (
-	"github.com/aleitner/FilePiece" v0.0.0-20180508072047-d775dc6d615d
+	"github.com/aleitner/FilePiece" v0.0.0-20180508074132-2fc0ca61c227
 	"github.com/golang/protobuf" v1.1.0
 	"github.com/julienschmidt/httprouter" v0.0.0-20180411154501-adbc77eec0d9
 	"github.com/stretchr/testify" v1.2.1

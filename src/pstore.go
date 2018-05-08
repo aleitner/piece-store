@@ -70,7 +70,7 @@ func Store(hash string, r io.Reader, length int64, psFileOffset int64, dir strin
 		return err
 	}
 
-	dataFileSection := fpiece.Chunk{dataFile, psFileOffset, length, 0}
+	dataFileSection := fpiece.NewChunk(dataFile, psFileOffset, length)
 
 	// Close when finished
 	defer dataFile.Close()
