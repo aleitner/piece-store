@@ -61,8 +61,33 @@ func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
   return nil
 }
 
-func (s *Server) Retrieve(rect *pb.ShardRetrieval, stream pb.RouteGuide_RetrieveServer) error {
-  fmt.Println("Retrieving data")
+func (s *Server) Retrieve(shardMeta *pb.ShardRetrieval, stream pb.RouteGuide_RetrieveServer) error {
+  fmt.Println("Retrieving data...")
+
+	buffer := make([]byte, 4096)
+	var total int64 = 0
+	for {
+		n, retrieveErr := pstore.Retrieve(shardMeta.Hash, bytes.NewBuffer(buffer), int64(cap(buffer)), shardMeta.StoreOffset + total, s.PieceStoreDir)
+		if retrieveErr != nil {
+			if retrieveErr != io.EOF {
+				return retrieveErr
+			}
+		}
+
+		fmt.Println("Sending data...")
+
+		// Write the buffer to the stream we opened earlier
+		if err := stream.Send(&pb.ShardRetrievalStream{Content: buffer[:len(buffer)]}); err != nil {
+			fmt.Println("%v.Send() = %v", stream, err)
+			return err
+		}
+
+		if retrieveErr == io.EOF {
+			break
+		}
+
+		total += n
+	}
 
   return nil
 }

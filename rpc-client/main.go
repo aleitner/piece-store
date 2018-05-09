@@ -89,6 +89,8 @@ func main() {
 					return ArgError.New("No hash specified")
 				}
 
+				hash := c.Args().Get(0)
+
 				if c.Args().Get(1) == "" {
 					return ArgError.New("No output file specified")
 				}
@@ -109,6 +111,17 @@ func main() {
 				if err != nil {
 					return err
 				}
+
+				err = api.RetrieveShardRequest(conn, hash, dataFile, -1, 0)
+
+				if err != nil {
+					fmt.Printf("Failed to retrieve file of hash: %s\n", hash)
+					os.Remove(dataPath)
+					return err
+				}
+
+				fmt.Printf("Successfully retrieved file of hash: %s\n", hash)
+        return nil
 
         return nil
       },

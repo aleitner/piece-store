@@ -8,7 +8,7 @@ import (
 
   "google.golang.org/grpc"
 
-  ps "github.com/aleitner/piece-store/routeguide"
+  pb "github.com/aleitner/piece-store/routeguide"
   "github.com/zeebo/errs"
 )
 
@@ -16,7 +16,7 @@ var ServerError = errs.Class("serverError")
 
 
 func StoreShardRequest(conn *grpc.ClientConn, hash string, data io.Reader, dataOffset int64, length int64, ttl int64, storeOffset int64) (error) {
-  c := ps.NewRouteGuideClient(conn)
+  c := pb.NewRouteGuideClient(conn)
 
   stream, err := c.Store(context.Background())
 
@@ -29,7 +29,7 @@ func StoreShardRequest(conn *grpc.ClientConn, hash string, data io.Reader, dataO
     }
 
     // Write the buffer to the stream we opened earlier
-    if err := stream.Send(&ps.ShardStore{Hash: hash, Size: length, Ttl: ttl, StoreOffset: storeOffset, Content: buffer[:n]}); err != nil {
+    if err := stream.Send(&pb.ShardStore{Hash: hash, Size: length, Ttl: ttl, StoreOffset: storeOffset, Content: buffer[:n]}); err != nil {
   		log.Fatalf("%v.Send() = %v", stream, err)
   	}
   }
@@ -49,6 +49,28 @@ func StoreShardRequest(conn *grpc.ClientConn, hash string, data io.Reader, dataO
 }
 
 func RetrieveShardRequest(conn *grpc.ClientConn, hash string, data io.Writer, length int64, offset int64) (error) {
+  c := pb.NewRouteGuideClient(conn)
+
+  stream, err := c.Retrieve(context.Background(), &pb.ShardRetrieval{Hash: hash, Size: length, StoreOffset: offset})
+  if err != nil {
+    return err
+  }
+
+  for {
+		shardData, err := stream.Recv()
+    if err != nil {
+      if err == io.EOF {
+        break
+      }
+      return err
+    }
+
+    _, err = data.Write(shardData.Content)
+    if err != nil {
+      return err
+    }
+
+  }
 
   return nil
 }
