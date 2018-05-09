@@ -6,7 +6,7 @@ package main
 
 import (
 	"fmt"
-  "log"
+	"log"
 	"net"
 	"os"
 	"path"
@@ -14,9 +14,8 @@ import (
 
 	"google.golang.org/grpc"
 
-  "github.com/aleitner/piece-store/rpc-server/api"
-  pb "github.com/aleitner/piece-store/routeguide"
-
+	pb "github.com/aleitner/piece-store/routeguide"
+	"github.com/aleitner/piece-store/rpc-server/api"
 )
 
 func main() {
@@ -30,22 +29,22 @@ func main() {
 
 	dataDir := path.Join("./piece-store-data/", port)
 
-  // create a listener on TCP port
-  lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
-  if err != nil {
-    log.Fatalf("failed to listen: %v", err)
-  }
-  // create a server instance
-  s := api.Server{dataDir}
+	// create a listener on TCP port
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	// create a server instance
+	s := api.Server{dataDir}
 
-  // create a gRPC server object
-  grpcServer := grpc.NewServer()
+	// create a gRPC server object
+	grpcServer := grpc.NewServer()
 
-  // attach the api service to the server
-  pb.RegisterRouteGuideServer(grpcServer, &s)
+	// attach the api service to the server
+	pb.RegisterRouteGuideServer(grpcServer, &s)
 
-  // start the server
-  if err := grpcServer.Serve(lis); err != nil {
-    log.Fatalf("failed to serve: %s", err)
-  }
+	// start the server
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %s", err)
+	}
 }
