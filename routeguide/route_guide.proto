@@ -25,7 +25,7 @@ message ShardStore {
 message ShardRetrieval {
   string hash = 1;
   int64 size = 2;
-  int64 storeOffset = 4;
+  int64 storeOffset = 3;
 }
 
 message ShardRetrievalStream {
@@ -39,7 +39,7 @@ message ShardDelete {
 message ShardDeleteSummary {
   int64 status = 1;
   string message = 2;
-  int64 elapsedTime = 4;
+  int64 elapsedTime = 3;
 }
 
 message ShardStoreSummary {

@@ -3,17 +3,20 @@ package api
 import (
   "io"
   "log"
-  "os"
 
   "golang.org/x/net/context"
 
   "google.golang.org/grpc"
 
-  pb "github.com/aleitner/piece-store/routeguide"
+  ps "github.com/aleitner/piece-store/routeguide"
+  "github.com/zeebo/errs"
 )
 
-func StoreShardRequest(conn *grpc.ClientConn, hash string, data *os.File, length int64, ttl int64, offset int64) (error) {
-  c := pb.NewRouteGuideClient(conn)
+var ServerError = errs.Class("serverError")
+
+
+func StoreShardRequest(conn *grpc.ClientConn, hash string, data io.Reader, dataOffset int64, length int64, ttl int64, storeOffset int64) (error) {
+  c := ps.NewRouteGuideClient(conn)
 
   stream, err := c.Store(context.Background())
 
@@ -26,16 +29,26 @@ func StoreShardRequest(conn *grpc.ClientConn, hash string, data *os.File, length
     }
 
     // Write the buffer to the stream we opened earlier
-    if err := stream.Send(&pb.ShardStore{Hash: hash, Size: length, Ttl: ttl, StoreOffset: offset, Content: buffer[:n]}); err != nil {
+    if err := stream.Send(&ps.ShardStore{Hash: hash, Size: length, Ttl: ttl, StoreOffset: storeOffset, Content: buffer[:n]}); err != nil {
   		log.Fatalf("%v.Send() = %v", stream, err)
   	}
   }
 
   reply, err := stream.CloseAndRecv()
   if err != nil {
-    log.Fatalf("%v.CloseAndRecv() got error %v, want %v", stream, err, nil)
+    return err
   }
+
   log.Printf("Route summary: %v", reply)
+
+  if reply.Status != 0 {
+    return ServerError.New(reply.Message)
+  }
+
+  return nil
+}
+
+func RetrieveShardRequest(conn *grpc.ClientConn, hash string, data io.Writer, length int64, offset int64) (error) {
 
   return nil
 }

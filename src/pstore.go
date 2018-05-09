@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/zeebo/errs"
+	"github.com/aleitner/FilePiece"
 )
 
 // Errors
@@ -36,7 +37,7 @@ func pathByHash(hash, dir string) (string, error) {
 	Store data into piece store
 
 	hash 		(string)				Hash of the data to be stored
-	r 			(io.Reader)			File/Stream that contains the contents of the data to be stored
+	r 			(io.Reader)	        File/Stream that contains the contents of the data to be stored
 	length 	(length)				Size of the data to be stored
 	psFileOffset 	(offset)  Offset of the data that you are writing. Useful for multiple connections to split the data transfer
 	dir 		(string)				pstore directory containing all other data stored
@@ -69,16 +70,27 @@ func Store(hash string, r io.Reader, length int64, psFileOffset int64, dir strin
 		return err
 	}
 
+	dataFileSection := fpiece.NewChunk(dataFile, psFileOffset, length)
+
 	// Close when finished
 	defer dataFile.Close()
 
-	// TODO: If multiple people are writing to this file the seek could mess up???
-	dataFile.Seek(psFileOffset, 0)
-	if _, err := io.CopyN(dataFile, r, length); err != nil {
-		if err != io.EOF {
+	buffer := make([]byte, 4096)
+  for {
+    // Read data from read stream into buffer
+    n, err := r.Read(buffer)
+    if err == io.EOF {
+      break
+    }
+
+    // Write the buffer to the stream we opened earlier
+    _, err = dataFileSection.Write(buffer[:n])
+		if err == io.EOF {
+			break
+		} else if (err != nil) {
 			return err
 		}
-	}
+  }
 
 	return nil
 }
