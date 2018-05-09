@@ -45,10 +45,14 @@ func main() {
 				if err != nil {
 					return err
 				}
+
 				// Close the file when we are done
 				defer file.Close()
 
 				fileInfo, err := os.Stat(c.Args().Get(1))
+				if err != nil {
+					return err
+				}
 
 				if fileInfo.IsDir() {
 					return ArgError.New(fmt.Sprintf("Path (%s) is a directory, not a file", c.Args().Get(1)))
@@ -72,8 +76,7 @@ func main() {
 					return ArgError.New("Missing file path")
 				}
 				fileInfo, err := os.Stat(c.Args().Get(1))
-
-				if os.IsNotExist(err) {
+				if err != nil {
 					return err
 				}
 
@@ -81,9 +84,16 @@ func main() {
 					return ArgError.New(fmt.Sprintf("Path (%s) is a file, not a directory", c.Args().Get(1)))
 				}
 
-				err = pstore.Retrieve(c.Args().Get(0), os.Stdout, -1, 0, c.Args().Get(1))
+				_, err = pstore.Retrieve(c.Args().Get(0), os.Stdout, -1, 0, c.Args().Get(1))
+				if err != nil {
+					if err == io.EOF {
+						return nil
+					}
 
-				return err
+					return err
+				}
+
+				return nil
 			},
 		},
 		{
