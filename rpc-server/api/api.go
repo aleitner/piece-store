@@ -48,7 +48,7 @@ func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
 			endTime := time.Now()
 			return stream.SendAndClose(&pb.ShardStoreSummary{
 				Status:   0,
-				Message: "FAIL",
+				Message: err.Error(),
 				TotalReceived: total,
 				ElapsedTime:  int64(endTime.Sub(startTime).Seconds()),
 			})
@@ -65,8 +65,22 @@ func (s *Server) Retrieve(rect *pb.ShardRetrieval, stream pb.RouteGuide_Retrieve
   return nil
 }
 
-func (s *Server) Delete(context.Context, *pb.ShardDelete) (*pb.ShardDeleteSummary, error) {
-  fmt.Println("Deleting data")
-
-  return nil, nil
+func (s *Server) Delete(ctx context.Context, in *pb.ShardDelete) (*pb.ShardDeleteSummary, error) {
+	fmt.Println("Deleting data")
+	startTime := time.Now()
+	err := pstore.Delete(in.Hash, s.PieceStoreDir)
+	if err != nil {
+		endTime := time.Now()
+		return &pb.ShardDeleteSummary{
+			Status:   -1,
+		  Message: err.Error(),
+		  ElapsedTime: int64(endTime.Sub(startTime).Seconds()),
+		}, err
+	}
+	endTime := time.Now()
+  return &pb.ShardDeleteSummary{
+		Status:  0,
+		Message: "OK",
+		ElapsedTime: int64(endTime.Sub(startTime).Seconds()),
+	}, nil
 }

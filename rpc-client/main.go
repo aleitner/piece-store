@@ -81,7 +81,12 @@ func main() {
       Aliases: []string{"x"},
       Usage:   "delete data",
       Action:  func(c *cli.Context) error {
-        return nil
+				if c.Args().Get(0) == "" {
+					return ArgError.New("Missing data Hash")
+				}
+				err = api.DeleteShardRequest(conn, c.Args().Get(0))
+
+				return err
       },
     },
   }

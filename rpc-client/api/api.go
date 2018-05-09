@@ -9,11 +9,11 @@ import (
 
   "google.golang.org/grpc"
 
-  ps "github.com/aleitner/piece-store/routeguide"
+  pb "github.com/aleitner/piece-store/routeguide"
 )
 
 func StoreShardRequest(conn *grpc.ClientConn, hash string, data *os.File, length int64, ttl int64, offset int64) (error) {
-  c := ps.NewRouteGuideClient(conn)
+  c := pb.NewRouteGuideClient(conn)
 
   stream, err := c.Store(context.Background())
 
@@ -26,7 +26,7 @@ func StoreShardRequest(conn *grpc.ClientConn, hash string, data *os.File, length
     }
 
     // Write the buffer to the stream we opened earlier
-    if err := stream.Send(&ps.ShardStore{Hash: hash, Size: length, Ttl: ttl, StoreOffset: offset, Content: buffer[:n]}); err != nil {
+    if err := stream.Send(&pb.ShardStore{Hash: hash, Size: length, Ttl: ttl, StoreOffset: offset, Content: buffer[:n]}); err != nil {
   		log.Fatalf("%v.Send() = %v", stream, err)
   	}
   }
@@ -37,5 +37,16 @@ func StoreShardRequest(conn *grpc.ClientConn, hash string, data *os.File, length
   }
   log.Printf("Route summary: %v", reply)
 
+  return nil
+}
+
+func DeleteShardRequest(conn *grpc.ClientConn, hash string) (error) {
+  c := pb.NewRouteGuideClient(conn)
+
+  reply, err := c.Delete(context.Background(), &pb.ShardDelete{Hash: hash})
+  if err != nil {
+    return err
+  }
+  log.Printf("Route summary : %v", reply)
   return nil
 }
