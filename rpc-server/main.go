@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 
   "github.com/aleitner/piece-store/rpc-server/api"
+	"github.com/aleitner/piece-store/rpc-server/utils"
   pb "github.com/aleitner/piece-store/routeguide"
 	_ "github.com/mattn/go-sqlite3"
 

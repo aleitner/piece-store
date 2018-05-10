@@ -24,10 +24,17 @@ type Server struct {
 	DbPath string
 }
 
+type StoreData struct {
+	Ttl int64
+	Hash string
+	Size int64
+}
+
 func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
   fmt.Println("Storing data...")
 	startTime := time.Now()
 	var total int64 = 0
+	var storeMeta *StoreData
 	for {
 		shardData, err := stream.Recv()
 		if err == io.EOF {
@@ -40,7 +47,7 @@ func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
 			}
 			defer db.Close()
 
-			_, err = db.Exec(fmt.Sprintf(`INSERT INTO ttl (hash, created, expires) VALUES ("%s", "%d", "%d")`, shardData.Hash, time.Now().Unix(), shardData.Ttl))
+			_, err = db.Exec(fmt.Sprintf(`INSERT INTO ttl (hash, created, expires) VALUES ("%s", "%d", "%d")`, storeMeta.Hash, time.Now().Unix(), storeMeta.Ttl))
 			if err != nil {
 				return err
 			}
@@ -53,6 +60,10 @@ func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
 		}
 		if err != nil {
 			return err
+		}
+
+		if storeMeta == nil {
+			storeMeta = &StoreData{Ttl: shardData.Ttl, Hash: shardData.Hash, Size: shardData.Size}
 		}
 
 		length := int64(len(shardData.Content))

@@ -108,13 +108,6 @@ func main() {
 				}
 
 				// Create File on file system
-<<<<<<< HEAD
-				// dataFile, err := os.OpenFile(dataPath, os.O_RDWR|os.O_CREATE, 0755)
-				// if err != nil {
-				// 	return err
-				// }
-				//
-=======
 				dataFile, err := os.OpenFile(dataPath, os.O_RDWR|os.O_CREATE, 0755)
 				if err != nil {
 					return err
@@ -131,8 +124,6 @@ func main() {
 				fmt.Printf("Successfully retrieved file of hash: %s\n", hash)
         return nil
 
->>>>>>> edd6670e4cc85d14043dad537fa489cf5937121a
-        return nil
       },
     },
 		{
