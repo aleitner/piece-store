@@ -19,7 +19,7 @@ var (
 )
 
 // creates datapath from hash and dir
-func pathByHash(hash, dir string) (string, error) {
+func PathByHash(hash, dir string) (string, error) {
 	if len(hash) < 20 {
 		return "", ArgError.New("Invalid hash length")
 	}
@@ -54,7 +54,7 @@ func Store(hash string, r io.Reader, length int64, psFileOffset int64, dir strin
 		return ArgError.New("No path provided")
 	}
 
-	dataPath, err := pathByHash(hash, dir)
+	dataPath, err := PathByHash(hash, dir)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func Store(hash string, r io.Reader, length int64, psFileOffset int64, dir strin
 		return err
 	}
 
-	dataFileSection := fpiece.NewChunk(dataFile, psFileOffset, length)
+	dataFileChunk := fpiece.NewChunk(dataFile, psFileOffset, length)
 
 	// Close when finished
 	defer dataFile.Close()
@@ -84,7 +84,7 @@ func Store(hash string, r io.Reader, length int64, psFileOffset int64, dir strin
 		}
 
 		// Write the buffer to the stream we opened earlier
-		_, err = dataFileSection.Write(buffer[:n])
+		_, err = dataFileChunk.Write(buffer[:n])
 		if err == io.EOF {
 			break
 		} else if err != nil {
@@ -112,7 +112,7 @@ func Retrieve(hash string, w io.Writer, length int64, readPosOffset int64, dir s
 		return 0, ArgError.New("No path provided")
 	}
 
-	dataPath, err := pathByHash(hash, dir)
+	dataPath, err := PathByHash(hash, dir)
 	if err != nil {
 		return 0, err
 	}
@@ -145,27 +145,11 @@ func Retrieve(hash string, w io.Writer, length int64, readPosOffset int64, dir s
 	defer dataFile.Close()
 
 	// Created a section reader so that we can concurrently retrieve the same file.
-	dataFileSection := io.NewSectionReader(dataFile, readPosOffset, length)
+	dataFileChunk := fpiece.NewChunk(dataFile, readPosOffset, length)
 
-	var total int64 = 0
-	buffer := make([]byte, 4096)
-	for {
-		// Read data from read stream into buffer
-		n, err := dataFileSection.Read(buffer)
-		if err == io.EOF {
-			return total, io.EOF
-		}
+	total, err := io.CopyN(w, dataFileChunk, length)
 
-		// Write the buffer to the stream we opened earlier
-		n, err = w.Write(buffer[:n])
-
-		total += int64(n)
-
-		if err != nil {
-
-			return 0, err
-		}
-	}
+	return total, err
 }
 
 /*
@@ -182,7 +166,7 @@ func Delete(hash string, dir string) error {
 		return ArgError.New("No path provided")
 	}
 
-	dataPath, err := pathByHash(hash, dir)
+	dataPath, err := PathByHash(hash, dir)
 	if err != nil {
 		return err
 	}

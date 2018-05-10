@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"golang.org/x/net/context"
@@ -64,32 +65,35 @@ func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
 func (s *Server) Retrieve(shardMeta *pb.ShardRetrieval, stream pb.RouteGuide_RetrieveServer) error {
   fmt.Println("Retrieving data...")
 
-	buffer := make([]byte, 4096)
-	var total int64 = 0
-	for {
-		n, retrieveErr := pstore.Retrieve(shardMeta.Hash, bytes.NewBuffer(buffer), int64(cap(buffer)), shardMeta.StoreOffset + total, s.PieceStoreDir)
-		if retrieveErr != nil {
-			if retrieveErr != io.EOF {
-				return retrieveErr
-			}
-		}
+	path, err := pstore.PathByHash(shardMeta.Hash, s.PieceStoreDir)
 
-		fmt.Println("Sending data...")
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	fmt.Println(fileInfo.Size())
+
+	var total int64 = 0
+	for total < fileInfo.Size() {
+
+		b := []byte{}
+		writeBuff := bytes.NewBuffer(b)
+
+		n, err := pstore.Retrieve(shardMeta.Hash, writeBuff, 4096, shardMeta.StoreOffset + total, s.PieceStoreDir)
+		if err != nil {
+				return err
+			}
 
 		// Write the buffer to the stream we opened earlier
-		if err := stream.Send(&pb.ShardRetrievalStream{Content: buffer[:len(buffer)]}); err != nil {
+		if err := stream.Send(&pb.ShardRetrievalStream{Size: n, Content: writeBuff.Bytes()}); err != nil {
 			fmt.Println("%v.Send() = %v", stream, err)
 			return err
-		}
-
-		if retrieveErr == io.EOF {
-			break
 		}
 
 		total += n
 	}
 
-  return nil
+	return nil
 }
 
 func (s *Server) Delete(context.Context, *pb.ShardDelete) (*pb.ShardDeleteSummary, error) {
