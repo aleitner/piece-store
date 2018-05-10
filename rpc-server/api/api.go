@@ -85,7 +85,6 @@ func (s *Server) Retrieve(shardMeta *pb.ShardRetrieval, stream pb.RouteGuide_Ret
 	if err != nil {
 		return err
 	}
-	fmt.Println(fileInfo.Size())
 
 	var total int64 = 0
 	for total < fileInfo.Size() {
@@ -95,8 +94,11 @@ func (s *Server) Retrieve(shardMeta *pb.ShardRetrieval, stream pb.RouteGuide_Ret
 
 		n, err := pstore.Retrieve(shardMeta.Hash, writeBuff, 4096, shardMeta.StoreOffset + total, s.PieceStoreDir)
 		if err != nil {
-				return err
-			}
+			return err
+		}
+
+		fmt.Println(n)
+
 
 		// Write the buffer to the stream we opened earlier
 		if err := stream.Send(&pb.ShardRetrievalStream{Size: n, Content: writeBuff.Bytes()}); err != nil {
