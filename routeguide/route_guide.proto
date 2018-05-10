@@ -29,7 +29,8 @@ message ShardRetrieval {
 }
 
 message ShardRetrievalStream {
-  bytes content = 1;
+  int64 size = 1;
+  bytes content = 2;
 }
 
 message ShardDelete {

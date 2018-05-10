@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"golang.org/x/net/context"
@@ -75,10 +76,38 @@ func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
   return nil
 }
 
-func (s *Server) Retrieve(rect *pb.ShardRetrieval, stream pb.RouteGuide_RetrieveServer) error {
-  fmt.Println("Retrieving data")
+func (s *Server) Retrieve(shardMeta *pb.ShardRetrieval, stream pb.RouteGuide_RetrieveServer) error {
+  fmt.Println("Retrieving data...")
 
-  return nil
+	path, err := pstore.PathByHash(shardMeta.Hash, s.PieceStoreDir)
+
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	fmt.Println(fileInfo.Size())
+
+	var total int64 = 0
+	for total < fileInfo.Size() {
+
+		b := []byte{}
+		writeBuff := bytes.NewBuffer(b)
+
+		n, err := pstore.Retrieve(shardMeta.Hash, writeBuff, 4096, shardMeta.StoreOffset + total, s.PieceStoreDir)
+		if err != nil {
+				return err
+			}
+
+		// Write the buffer to the stream we opened earlier
+		if err := stream.Send(&pb.ShardRetrievalStream{Size: n, Content: writeBuff.Bytes()}); err != nil {
+			fmt.Println("%v.Send() = %v", stream, err)
+			return err
+		}
+
+		total += n
+	}
+
+	return nil
 }
 
 func (s *Server) Delete(ctx context.Context, in *pb.ShardDelete) (*pb.ShardDeleteSummary, error) {

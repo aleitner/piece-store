@@ -7,7 +7,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-  "log"
+	"log"
 	"net"
 	"os"
 	"path"
@@ -54,11 +54,11 @@ func main() {
   // create a server instance
   s := api.Server{dataDir, dbPath}
 
-  // create a gRPC server object
-  grpcServer := grpc.NewServer()
+	// create a gRPC server object
+	grpcServer := grpc.NewServer()
 
-  // attach the api service to the server
-  pb.RegisterRouteGuideServer(grpcServer, &s)
+	// attach the api service to the server
+	pb.RegisterRouteGuideServer(grpcServer, &s)
 
 	// routinely check DB for and delete expired entries
 	go func() {

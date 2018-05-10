@@ -49,6 +49,28 @@ func StoreShardRequest(conn *grpc.ClientConn, hash string, data io.Reader, dataO
 }
 
 func RetrieveShardRequest(conn *grpc.ClientConn, hash string, data io.Writer, length int64, offset int64) (error) {
+  c := pb.NewRouteGuideClient(conn)
+
+  stream, err := c.Retrieve(context.Background(), &pb.ShardRetrieval{Hash: hash, Size: length, StoreOffset: offset})
+  if err != nil {
+    return err
+  }
+
+  for {
+		shardData, err := stream.Recv()
+    if err != nil {
+      if err == io.EOF {
+        break
+      }
+      return err
+    }
+
+    _, err = data.Write(shardData.Content)
+    if err != nil {
+      return err
+    }
+
+  }
 
   return nil
 }

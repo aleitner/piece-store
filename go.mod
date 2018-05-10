@@ -1,11 +1,10 @@
 module "github.com/aleitner/piece-store"
 
 require (
-	"github.com/aleitner/FilePiece" v0.0.0-20180508074132-2fc0ca61c227
+	"github.com/aleitner/FilePiece" v0.0.0-20180510055935-bac31a3ab5de
 	"github.com/golang/protobuf" v1.1.0
 	"github.com/julienschmidt/httprouter" v0.0.0-20180411154501-adbc77eec0d9
 	"github.com/mattn/go-sqlite3" v1.6.0
-	"github.com/stretchr/testify" v1.2.1
 	"github.com/urfave/cli" v1.20.0
 	"github.com/zeebo/errs" v0.1.0
 	"golang.org/x/net" v0.0.0-20180502164142-640f4622ab69

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -128,7 +129,7 @@ func DownloadFile(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 	fmt.Printf("Downloading file (%s), Offset: (%v), Size: (%v)...\n", hash, pstoreOffset, length)
 
-	err := pstore.Retrieve(hash, w, length, pstoreOffset, dataDir)
+	_, err := pstore.Retrieve(hash, w, length, pstoreOffset, dataDir)
 
 	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())

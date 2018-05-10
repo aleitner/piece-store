@@ -8,8 +8,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/zeebo/errs"
 	"github.com/aleitner/FilePiece"
+	"github.com/zeebo/errs"
 )
 
 // Errors
@@ -19,7 +19,7 @@ var (
 )
 
 // creates datapath from hash and dir
-func pathByHash(hash, dir string) (string, error) {
+func PathByHash(hash, dir string) (string, error) {
 	if len(hash) < 20 {
 		return "", ArgError.New("Invalid hash length")
 	}
@@ -54,7 +54,7 @@ func Store(hash string, r io.Reader, length int64, psFileOffset int64, dir strin
 		return ArgError.New("No path provided")
 	}
 
-	dataPath, err := pathByHash(hash, dir)
+	dataPath, err := PathByHash(hash, dir)
 	if err != nil {
 		return err
 	}
@@ -70,27 +70,27 @@ func Store(hash string, r io.Reader, length int64, psFileOffset int64, dir strin
 		return err
 	}
 
-	dataFileSection := fpiece.NewChunk(dataFile, psFileOffset, length)
+	dataFileChunk := fpiece.NewChunk(dataFile, psFileOffset, length)
 
 	// Close when finished
 	defer dataFile.Close()
 
 	buffer := make([]byte, 4096)
-  for {
-    // Read data from read stream into buffer
-    n, err := r.Read(buffer)
-    if err == io.EOF {
-      break
-    }
-
-    // Write the buffer to the stream we opened earlier
-    _, err = dataFileSection.Write(buffer[:n])
+	for {
+		// Read data from read stream into buffer
+		n, err := r.Read(buffer)
 		if err == io.EOF {
 			break
-		} else if (err != nil) {
+		}
+
+		// Write the buffer to the stream we opened earlier
+		_, err = dataFileChunk.Write(buffer[:n])
+		if err == io.EOF {
+			break
+		} else if err != nil {
 			return err
 		}
-  }
+	}
 
 	return nil
 }
@@ -100,31 +100,31 @@ func Store(hash string, r io.Reader, length int64, psFileOffset int64, dir strin
 
 	Retrieve data from pstore directory
 
-	hash 					(string)		Hash of the stored data
-	w 						(io.Writer)	Stream that recieves the stored data
-	length 				(length)		Amount of data to read. Read all data if -1
-	readPosOffset	(offset)		Offset of the data that you are reading. Useful for multiple connections to split the data transfer
-	dir 					(string)		pstore directory containing all other data stored
-	returns 			(error) if failed and nil if successful
+	hash 					(string)		   Hash of the stored data
+	w 						(io.Writer)	   Stream that recieves the stored data
+	length 				(length)		   Amount of data to read. Read all data if -1
+	readPosOffset	(offset)	   	 Offset of the data that you are reading. Useful for multiple connections to split the data transfer
+	dir 					(string)		   pstore directory containing all other data stored
+	returns 			(int64, error) returns err if failed and the number of bytes retrieved if successful
 */
-func Retrieve(hash string, w io.Writer, length int64, readPosOffset int64, dir string) error {
+func Retrieve(hash string, w io.Writer, length int64, readPosOffset int64, dir string) (int64, error) {
 	if dir == "" {
-		return ArgError.New("No path provided")
+		return 0, ArgError.New("No path provided")
 	}
 
-	dataPath, err := pathByHash(hash, dir)
+	dataPath, err := PathByHash(hash, dir)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	fileInfo, err := os.Stat(dataPath)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// If offset is greater than file size return
 	if readPosOffset >= fileInfo.Size() || readPosOffset < 0 {
-		return ArgError.New("Invalid offset: %v", readPosOffset)
+		return 0, ArgError.New("Invalid offset: %v", readPosOffset)
 	}
 
 	// If length less than 0 read the entire file
@@ -139,42 +139,18 @@ func Retrieve(hash string, w io.Writer, length int64, readPosOffset int64, dir s
 
 	dataFile, err := os.OpenFile(dataPath, os.O_RDONLY, 0755)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	// Close when finished
 	defer dataFile.Close()
 
 	// Created a section reader so that we can concurrently retrieve the same file.
-	dataFileSection := io.NewSectionReader(dataFile, readPosOffset, length)
+	dataFileChunk := fpiece.NewChunk(dataFile, readPosOffset, length)
 
-	if _, err := io.Copy(w, dataFileSection); err != nil {
-		if err != io.EOF {
-			return err
-		}
-	}
+	total, err := io.CopyN(w, dataFileChunk, length)
 
-	return nil
+	return total, err
 }
-
-// Awaiting ranger pull request
-// func Retrieve(hash string, dir string) (ranger.RangerCloser, error) {
-//   dataPath, err := pathByHash(hash, dir)
-//   if err != nil {
-//     return nil, err
-//   }
-//
-//   fh, err := os.Open(dataPath)
-//   if err != nil {
-//     return nil, err
-//   }
-//
-//   rv, err := ranger.FileRanger(fh)
-//   if err != nil {
-//     fh.Close()
-//     return nil, err
-//   }
-//   return rv, nil
-// }
 
 /*
 	Delete
@@ -190,13 +166,13 @@ func Delete(hash string, dir string) error {
 		return ArgError.New("No path provided")
 	}
 
-	dataPath, err := pathByHash(hash, dir)
+	dataPath, err := PathByHash(hash, dir)
 	if err != nil {
 		return err
 	}
 
 	if _, err = os.Stat(dataPath); os.IsNotExist(err) {
-		return ArgError.New("Hash folder does not exist")
+		return nil
 	}
 
 	if err = os.Remove(dataPath); err != nil {
