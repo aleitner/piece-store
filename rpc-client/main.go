@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -59,7 +60,7 @@ func main() {
 
 				var fileOffset, storeOffset int64 = 0, 0
 				var length int64 = fileInfo.Size()
-				var ttl int64 = 86400
+				var ttl int64 = time.Now().Unix() + 86400
 
 				hash, err := utils.DetermineHash(file, fileOffset, length)
 				if err != nil {
@@ -105,11 +106,11 @@ func main() {
 				}
 
 				// Create File on file system
-				dataFile, err := os.OpenFile(dataPath, os.O_RDWR|os.O_CREATE, 0755)
-				if err != nil {
-					return err
-				}
-
+				// dataFile, err := os.OpenFile(dataPath, os.O_RDWR|os.O_CREATE, 0755)
+				// if err != nil {
+				// 	return err
+				// }
+				//
         return nil
       },
     },
