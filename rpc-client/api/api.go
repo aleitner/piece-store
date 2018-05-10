@@ -74,3 +74,14 @@ func RetrieveShardRequest(conn *grpc.ClientConn, hash string, data io.Writer, le
 
   return nil
 }
+
+func DeleteShardRequest(conn *grpc.ClientConn, hash string) (error) {
+  c := pb.NewRouteGuideClient(conn)
+
+  reply, err := c.Delete(context.Background(), &pb.ShardDelete{Hash: hash})
+  if err != nil {
+    return err
+  }
+  log.Printf("Route summary : %v", reply)
+  return nil
+}

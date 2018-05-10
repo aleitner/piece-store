@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -59,7 +60,7 @@ func main() {
 
 				var fileOffset, storeOffset int64 = 0, 0
 				var length int64 = fileInfo.Size()
-				var ttl int64 = 86400
+				var ttl int64 = time.Now().Unix() + 86400
 
 				hash, err := utils.DetermineHash(file, fileOffset, length)
 				if err != nil {
@@ -123,7 +124,6 @@ func main() {
 				fmt.Printf("Successfully retrieved file of hash: %s\n", hash)
         return nil
 
-        return nil
       },
     },
 		{
@@ -131,7 +131,12 @@ func main() {
       Aliases: []string{"x"},
       Usage:   "delete data",
       Action:  func(c *cli.Context) error {
-        return nil
+				if c.Args().Get(0) == "" {
+					return ArgError.New("Missing data Hash")
+				}
+				err = api.DeleteShardRequest(conn, c.Args().Get(0))
+
+				return err
       },
     },
   }

@@ -6,6 +6,7 @@ package api
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"io"
 	"os"
@@ -15,21 +16,41 @@ import (
 
 	pb "github.com/aleitner/piece-store/routeguide"
 	"github.com/aleitner/piece-store/src"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Server struct {
   PieceStoreDir string
+	DbPath string
+}
+
+type StoreData struct {
+	Ttl int64
+	Hash string
+	Size int64
 }
 
 func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
   fmt.Println("Storing data...")
 	startTime := time.Now()
 	var total int64 = 0
+	var storeMeta *StoreData
 	for {
 		shardData, err := stream.Recv()
 		if err == io.EOF {
 			fmt.Println("Successfully stored data...")
 			endTime := time.Now()
+
+			db, err := sql.Open("sqlite3", s.DbPath)
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+
+			_, err = db.Exec(fmt.Sprintf(`INSERT INTO ttl (hash, created, expires) VALUES ("%s", "%d", "%d")`, storeMeta.Hash, time.Now().Unix(), storeMeta.Ttl))
+			if err != nil {
+				return err
+			}
 			return stream.SendAndClose(&pb.ShardStoreSummary{
 				Status:   0,
 				Message: "OK",
@@ -39,6 +60,10 @@ func (s *Server) Store(stream pb.RouteGuide_StoreServer) error {
 		}
 		if err != nil {
 			return err
+		}
+
+		if storeMeta == nil {
+			storeMeta = &StoreData{Ttl: shardData.Ttl, Hash: shardData.Hash, Size: shardData.Size}
 		}
 
 		length := int64(len(shardData.Content))
@@ -98,8 +123,47 @@ func (s *Server) Retrieve(shardMeta *pb.ShardRetrieval, stream pb.RouteGuide_Ret
 	return nil
 }
 
-func (s *Server) Delete(context.Context, *pb.ShardDelete) (*pb.ShardDeleteSummary, error) {
-  fmt.Println("Deleting data")
+func (s *Server) Delete(ctx context.Context, in *pb.ShardDelete) (*pb.ShardDeleteSummary, error) {
+	fmt.Println("Deleting data")
+	startTime := time.Now()
+	err := pstore.Delete(in.Hash, s.PieceStoreDir)
+	if err != nil {
+		endTime := time.Now()
+		return &pb.ShardDeleteSummary{
+			Status:   -1,
+		  Message: err.Error(),
+		  ElapsedTime: int64(endTime.Sub(startTime).Seconds()),
+		}, err
+	}
+	db, err := sql.Open("sqlite3", s.DbPath)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
 
-  return nil, nil
+	result, err := db.Exec(fmt.Sprintf(`DELETE FROM ttl WHERE hash="%s"`, in.Hash))
+	if err != nil {
+		return &pb.ShardDeleteSummary{
+			Status:   -1,
+		  Message: err.Error(),
+		  ElapsedTime: int64(time.Now().Sub(startTime).Seconds()),
+		}, err
+	}
+	rowsDeleted, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+		}
+	if rowsDeleted == 0 || rowsDeleted > 1 {
+		return &pb.ShardDeleteSummary{
+			Status:   -1,
+		  Message: fmt.Sprintf("Rows affected: (%d) does not equal 1", rowsDeleted),
+		  ElapsedTime: int64(time.Now().Sub(startTime).Seconds()),
+		}, nil
+		}
+	endTime := time.Now()
+  return &pb.ShardDeleteSummary{
+		Status:  0,
+		Message: "OK",
+		ElapsedTime: int64(endTime.Sub(startTime).Seconds()),
+	}, nil
 }
